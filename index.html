@@ -1,0 +1,1959 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>PeKit</title>
+	<link rel="stylesheet" href="deps/normalize.css">
+	<link rel="stylesheet" href="deps/skeleton.css">
+	<script src="deps/vue.js"></script>
+	<script src="deps/FileSaver.min.js"></script>
+	<script type="text/javascript" src="pelite.js"></script>
+
+<style>
+.app-header {
+	background-color: #333;
+	color: #fff;
+	padding-left: 2rem;
+	position: relative;
+	line-height: 4.8rem;
+}
+.app-header > h1 {
+	margin: 0;
+	padding: 0;
+	font-size: 3.5rem;
+}
+.app-header__command {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+.app-header__filename {
+	color: #ddd;
+}
+.app-header__command--X {
+	cursor: pointer;
+	padding: 6px 10px 6px 10px;
+}
+</style>
+<style>
+html, body, #app, .app-main {
+	font-family: 'Roboto', 'Segoe UI', 'Verdana', sans-serif;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+.app-main {
+	display: grid;
+	grid-template-rows: 4.8rem calc(100% - 8rem) 3.2rem;
+}
+
+/* article styles */
+article {
+	overflow: auto;
+}
+article > h3 {
+	border-bottom: darkslategray 1px solid;
+}
+article > table.entries th, article > table.entries td {
+	vertical-align: top;
+	font-weight: normal;
+	padding: 0.2rem 1rem;
+}
+article > table.records th, article > table.records td {
+	vertical-align: top;
+	padding: 0.2rem 1rem;
+}
+.text {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	white-space: pre;
+	text-align: left;
+}
+.number {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	white-space: pre;
+	text-align: right;
+}
+</style>
+<style>
+.app-splash__error {
+	color: red;
+}
+</style>
+<style>
+.app-status {
+	background-color: #007acd;
+	color: #fff;
+	line-height: 3.2rem;
+	padding-left: 1rem;
+}
+</style>
+<style>
+.app-upload {
+	padding: 0 2rem;
+}
+</style>
+<style>
+.monospace {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	white-space: pre;
+}
+.select--none {
+	user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+}
+.select--contain {
+	user-select: contain;
+	-moz-user-select: contain;
+	-ms-user-select: contain;
+	-webkit-user-select: contain;
+}
+.select--text {
+	user-select: text;
+	-moz-user-select: text;
+	-ms-user-select: text;
+	-webkit-user-select: text;
+}
+</style>
+<style>
+.app-imports > h3 {
+	position: relative;
+}
+.app-imports > h3.collapsed {
+	border-bottom: none;
+}
+.app-imports > h3 > p {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	font-weight: normal;
+	font-size: 12pt;
+	cursor: pointer;
+}
+</style>
+<style>
+.app-ntheaders > table.entries {
+	width: min(100%, 100rem);
+	table-layout: fixed;
+}
+.app-ntheaders > table.entries > tbody > tr > th {
+	width: 22.4rem;
+}
+.app-ntheaders > table.entries > tbody > tr > td:nth-child(2) {
+	width: 16rem;
+}
+</style>
+<style>
+</style>
+<style>
+.app-analysis-scanner__input {
+	display: grid;
+	grid-template: auto / auto 12rem 12rem;
+}
+.app-analysis-scanner__input > a {
+	text-align: center;
+}
+.app-analysis-scanner__matches td {
+	width: 10rem;
+	padding: 0.2rem 0;
+}
+</style>
+<style>
+.app-sections__layout-titles {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+}
+.app-sections__layout-titles > p {
+	padding: 0;
+	text-align: center;
+}
+.app-sections__layout-titles--pct {
+	font-size: smaller;
+	color: grey;
+}
+
+.app-sections__layout-graph {
+	position: relative;
+	height: 2.5em;
+	border: 1px solid #000000;
+	background-color: #000000;
+}
+.app-sections__layout-graph > span {
+	position: absolute;
+	display: inline-block;
+	height: 2.5em;
+	/* Separating sections with a border */
+	border-left: 1px solid #000000;
+	box-sizing: border-box;
+	/* Coloring the section name */
+	color: rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+	line-height: 2.5em;
+	text-align: center;
+}
+</style>
+<style>
+.dock-main {
+	display: grid;
+	grid-template: auto / 16rem auto;
+}
+.dock-main > article {
+	padding: 0 1.6rem;
+	overflow-y: scroll;
+	overflow-x: auto;
+	display: none;
+}
+.dock-main > article:last-child {
+	display: block;
+}
+</style>
+<style>
+.dock-sidebar {
+	overflow-y: auto;
+
+	background-color: #f5f5f5;
+	border-right: 1px solid #eee;
+}
+.dock-sidebar > div {
+	cursor: default;
+	color: #337ab7;
+	padding: 8px 15px;
+}
+.dock-sidebar > div.enabled {
+	cursor: pointer;
+}
+.dock-sidebar > div.enabled:hover {
+	color: #428bca;
+	background-color: #eee;
+}
+.dock-sidebar > div.enabled.selected {
+	cursor: default;
+	color: #fff;
+	background-color: #428bca;
+}
+.dock-sidebar > div.disabled {
+	display: none;
+}
+/*
+.dock-sidebar > ul > li.enabled:after {
+	content: "â–·";
+	float: right;
+	opacity: 50%;
+}
+.dock-sidebar > ul > li.enabled.selected:after {
+	content: "â–¶";
+}
+*/
+</style>
+<style>
+.dock-window {
+	position: absolute;
+	display: grid;
+	padding: 5px;
+}
+.dock-window__client {
+	display: grid;
+	grid-template: 2rem auto / auto;
+	grid-template-areas: "title" "slot";
+	background-color: #ddd;
+	border: 1px solid black;
+}
+.dock-window--dragging {
+	cursor: grabbing !important;
+}
+.dock-window--ew-resize {
+	cursor: ew-resize !important;
+}
+.dock-window--ns-resize {
+	cursor: ns-resize !important;
+}
+.dock-window--nesw-resize {
+	cursor: nesw-resize !important;
+}
+.dock-window--nwse-resize {
+	cursor: nwse-resize !important;
+}
+.dock-window__title {
+	grid-area: title;
+	margin: 0;
+	padding: 0;
+	line-height: 2rem;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.dock-window__slot {
+	grid-area: slot;
+	display: grid;
+	overflow: hidden;
+}
+</style>
+<style>
+table.resources-hexed {
+	border-spacing: 5px;
+}
+table.resources-hexed td {
+	font-weight: lighter;
+}
+table.resources-hexed th {
+	font-weight: normal;
+	color: blue;
+	cursor: default;
+}
+</style>
+<style>
+.resources-manifest > textarea {
+	width: 100%;
+	resize: vertical;
+}
+</style>
+<style>
+.resources-preview > textarea {
+	word-wrap: break-all;
+	resize: vertical;
+	width: 100%;
+}
+</style>
+<style>
+.pe-resources > section {
+	display: grid;
+	overflow: hidden;
+	grid-template: auto / 15rem auto;
+}
+
+.resources-tree__ls ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+.resources-tree__ls li {
+	margin: 0;
+}
+.resources-tree__ls label {
+	cursor: pointer;
+	font-weight: normal;
+	margin: 0;
+}
+.resources-tree__ls label.selected {
+	background-color: #316ac5;
+	color: #ffffff;
+	border: 1px dotted #ce953a;
+	padding: 0 0.3rem;
+}
+.resources-tree__ls label.unselected {
+	padding: 0 0.3rem;
+}
+.resources-tree__ls .icon {
+	background-size: 16px 16px;
+	background-repeat: no-repeat;
+	background-position: left 2px;
+	padding-left: 20px;
+}
+.resources-tree__ls .icon.icon-dir-opened {
+	background-image: url('img/icons8-opened-folder-50.png');
+}
+.resources-tree__ls .icon.icon-dir-closed {
+	background-image: url('img/icons8-folder-50.png');
+}
+.resources-tree__ls .icon.icon-blank {
+	background-image: url('img/icons8-file-24.png');
+}
+
+.resources-tree__preview {
+	display: grid;
+	grid-template: 4.2rem auto / auto;
+}
+.resources-tree__preview textarea {
+	width: 100%;
+	resize: vertical;
+}
+</style>
+<style>
+/* Style the tab */
+.w3stab {
+	overflow: hidden;
+	border: 1px solid #ccc;
+	background-color: #f1f1f1;
+}
+
+/* Style the buttons that are used to open the tab content */
+.w3stab > button {
+	background-color: inherit;
+	float: left;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	padding: 8px 16px;
+	transition: 0.1s;
+}
+
+/* Change background color of buttons on hover */
+.w3stab > button:hover {
+	background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.w3stab > button.active {
+	background-color: #ccc;
+}
+
+/* Style the tab content */
+.w3stabcontent {
+	padding: 6px 12px;
+	border: 1px solid #ccc;
+	border-top: none;
+}
+</style>
+</head>
+<body>
+
+<template id="app-header">
+	<header class="app-header">
+		<h1 class="select--none">PeKit</h1>
+		<div v-if="pekit.hasFile()" class="app-header__command"><span class="app-header__command--filename">{{ pekit.filename }}</span><span class="app-header__command--X select--none" @click="closeFile">✖</span></div>
+	</header>
+</template>
+<template id="app-main">
+	<div class="app-main">
+		<app-header></app-header>
+		<component :is="componentName"></component>
+		<app-status></app-status>
+	</div>
+</template>
+<template id="app-splash">
+	<article class="app-splash">
+		<p v-if="pelite.error">Loading PeLite WASM...<span class="app-splash__error"> {{ pelite.reason }}</span></p>
+	</article>
+</template>
+<template id="app-status">
+	<div class="app-status">{{ pekit.statusMessage }}</div>
+</template>
+<template id="app-upload">
+	<article class="app-upload" @drop.prevent="submit($event.dataTransfer.files)" @dragover.prevent="">
+		<p>PeKit is a web application to inspect <a href="https://en.wikipedia.org/wiki/Portable_Executable">Portable Executable (PE)</a> files. This project is Open Source and available on <a href="https://github.com/CasualX/pekit">GitHub</a>.</p>
+		<p>To get started, please submit an executable file:</p>
+		<input type="file" accept=".exe,.dll,.sys,.mui" id="sample" @change="submit($event.target.files)" :disabled="pekit.loadingFile()">
+		<p v-if="pekit.statusError != null">{{ pekit.statusError }}</p>
+	</article>
+</template>
+<template id="app-dosheader">
+	<article class="app-dosheader">
+		<h3>DOS Header</h3>
+		<table class="entries">
+			<tr v-for="[key, value] in Object.entries(dosHeader)">
+				<th class="text">{{ key }}</th>
+				<td class="number">{{ display(value) }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-exports">
+	<article class="app-exports">
+		<h3>Properties</h3>
+		<table class="entries">
+			<tr><th class="text">DllName</th><td class="number">{{ exports.dll_name }}</td></tr>
+			<tr><th class="text">TimeDateStamp</th><td class="number">{{ hex(exports.time_date_stamp) }}</td><td>{{ new Date(exports.time_date_stamp * 1000) }}</td></tr>
+			<tr><th class="text">Version</th><td class="number">{{ exports.version }}</td></tr>
+			<tr><th class="text">OrdinalBase</th><td class="number">{{ exports.ordinal_base }}</td></tr>
+			<tr><th class="text">NumberOfFunctions</th><td class="number">{{ exports.functions.length }}</td></tr>
+			<tr><th class="text">NumberOfNames</th><td class="number">{{ names.length }}</td></tr>
+		</table>
+		<h3>Symbols</h3>
+		<table class="records">
+			<tr>
+				<th class="number">Ord</th>
+				<th class="number">Address</th>
+				<th class="text">Name</th>
+			</tr>
+			<tr v-for="sym in symbols">
+				<td class="number">{{ sym.ordinal }}</td>
+				<td class="number">{{ sym.address }}</td>
+				<td class="text">{{ display(sym.names || []) }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-imports">
+	<article class="app-imports">
+		<p><button class="skeleton" @click="expandAll()">Expand All</button> <button class="skeleton" @click="collapseAll()">Collapse All</button></p>
+		<template v-for="desc in imports">
+			<template v-if="desc.int">
+				<h3 :class="{ collapsed: !state[desc.dll_name] }">
+					{{ desc.dll_name }}<p @click="toggle(desc.dll_name)" class="select--none">{{ desc.int.length }} imports {{ state[desc.dll_name] ? '▼' : '▷' }}</p>
+				</h3>
+				<table v-if="state[desc.dll_name]" class="records">
+					<tr>
+						<th class="number" style="width: 5em">Hint</th>
+						<th class="text" style="width: 5em">Name</th>
+					</tr>
+					<tr v-for="imp in desc.int">
+						<template v-if="imp.ByName">
+							<td class="number">{{ imp.ByName.hint }}</td>
+							<td class="text">{{ imp.ByName.name }}</td>
+						</template>
+						<template v-if="imp.ByOrdinal">
+							<td class="number">ord</td>
+							<td class="text">{{ imp.ByOrdinal.ord }}</td>
+						</template>
+					</tr>
+				</table>
+			</template>
+			<template v-else>
+				<h3 class="collapsed">{{ desc.dll_name }}</h3>
+				<p>Error reading the import name table.</p>
+			</template>
+		</template>
+	</article>
+</template>
+<template id="app-ntheaders">
+	<article class="app-ntheaders">
+		<h3>NT Headers</h3>
+		<table class="entries">
+			<tr>
+				<th class="text">Signature</th>
+				<td class="number">{{ display(ntHeaders.Signature) }}</td>
+				<td class="text">{{ detail('NtHeaders', 'Signature', ntHeaders.Signature) }}</td>
+			</tr>
+		</table>
+		<h3>File Header</h3>
+		<table class="entries">
+			<tr v-for="[key, value] in Object.entries(ntHeaders.FileHeader)">
+				<th class="text">{{ key }}</th>
+				<td class="number">{{ display(value) }}</td>
+				<td class="text">{{ detail('FileHeader', key, value) }}</td>
+			</tr>
+		</table>
+		<h3>Optional Header</h3>
+		<table class="entries">
+			<tr v-for="[key, value] in Object.entries(ntHeaders.OptionalHeader)">
+				<th class="text">{{ key }}</th>
+				<td class="number">{{ display(value) }}</td>
+				<td class="text">{{ detail('OptionalHeader', key, value) }}</td>
+			</tr>
+		</table>
+		<h3>Data Directory</h3>
+		<table class="records">
+			<tr><th class="text">Name</th><th class="text">Section</th><th class="number">VirtualAddress</th><th class="number">Size</th></tr>
+			<tr v-for="data in dataDirectory">
+				<td class="text">{{ data.name }}</td>
+				<td class="text">{{ data.section }}</td>
+				<td class="number">{{ display(data.address) }}</td>
+				<td class="number">{{ display(data.size) }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-overview">
+	<article class="app-overview">
+		<h3>Overview</h3>
+	</article>
+</template>
+<template id="app-richstructure">
+	<article class="app-richstructure">
+		<template v-if="error">
+			<p>There was an error reading the RichStructure:</p>
+			<p>{{ error }}</p>
+		</template>
+		<template v-else-if="!richStructure">
+			<p>There is no RichStructure.</p>
+		</template>
+		<template v-else>
+			<h3>Properties</h3>
+			<table class="entries">
+				<tr><th class="text">XOR Key</th><td class="number">{{ hex(richStructure.xor_key) }}</td><td></td></tr>
+				<tr><th class="text">Checksum</th><td class="number">{{ hex(richStructure.checksum) }}</td><td></td></tr>
+				<tr><th class="text">IsValid</th>
+					<template v-if="isValid"><td style="color: limegreen;">✔</td><td>The Checksum matches the XOR Key.</td></template>
+					<template v-else><td style="color: red;">❌</td><td>The Checksum does not match the XOR Key!</td></template>
+				</tr>
+			</table>
+			<h3>Records</h3>
+			<table class="records">
+				<tr>
+					<th class="number">Product</th>
+					<th class="number">Build</th>
+					<th class="number">Count</th>
+				</tr>
+				<tr v-for="record in richStructure.records">
+					<td class="number">{{ record.product }}</td>
+					<td class="number">{{ record.build }}</td>
+					<td class="number">{{ record.count }}</td>
+				</tr>
+			</table>
+		</template>
+	</article>
+</template>
+<template id="app-analysis-scanner">
+	<article class="app-analysis-scanner">
+		<h3>Scanner</h3>
+		<div class="app-analysis-scanner__input">
+			<div>
+				<label>Pattern <a href="https://docs.rs/pelite/*/pelite/pattern/fn.parse.html" title="Information about the pattern syntax" target="_blank" rel="noopener noreferrer">?</a></label>
+				<input type="text" v-model="instance.pattern" @keyup.enter="scan" style="width: calc(100% - 2rem);" :disabled="processing">
+			</div>
+			<div><label>Limit matches</label><input type="number" v-model="instance.limit" style="width:10rem;" :disabled="processing"></div>
+			<div><label>Scan range</label><select @input="setRange($event.target.value)" style="width:10rem;" :disabled="processing"><option value="" selected>image</option><option v-for="sect in sections" :value="sect.VirtualAddress + '..' + sect.VirtualSize">{{ sect.Name }}</option></select></div>
+		</div>
+		<h3>Matches</h3>
+		<p v-if="processing">Scanning for the pattern...</p>
+		<p v-if="error">{{ error }}</p>
+		<template v-if="matches != null">
+			<p v-if="matches.length >= limit">Found more than {{ limit }} matches, showing only the first {{ limit }} matches:</p>
+			<p v-else-if="matches.length > 0 ">Found {{ matches.length }} matches:</p>
+			<p v-else>No matches found.</p>
+			<table v-if="matches.length > 0" class="app-analysis-scanner__matches">
+				<tr>
+					<th v-for="i in matches[0].length" class="number">{{ i == 1 ? "address" : i - 1 }}</th>
+				</tr>
+				<tr v-for="match in matches">
+					<td v-for="address in match" class="number">{{ hex(address) }}</td>
+				</tr>
+			</table>
+		</template>
+	</article>
+</template>
+<template id="app-sections">
+	<article class="app-sections">
+		<h3>Section Headers</h3>
+		<table class="records">
+			<tr>
+				<th class="text">Name</th>
+				<th class="number">VirtualAddress</th>
+				<th class="number">VirtualSize</th>
+				<th class="number">PointerToRawData</th>
+				<th class="number">SizeOfRawData</th>
+				<th class="number">Characteristics</th>
+				<th></th>
+			</tr>
+			<tr v-for="s in sections">
+				<td class="text">{{ s.Name }}</td>
+				<td class="number">{{ s.VirtualAddress }}</td>
+				<td class="number">{{ s.VirtualSize }}</td>
+				<td class="number">{{ s.PointerToRawData }}</td>
+				<td class="number">{{ s.SizeOfRawData }}</td>
+				<td class="number">{{ s.Characteristics }}</td>
+				<td class="text">{{ s.details }}</td>
+			</tr>
+		</table>
+		<h3>Section Layout</h3>
+		<section class="app-sections__layout">
+			<div class="app-sections__layout-titles">
+				<p v-for="item in virtualItems">
+					<span class="text">{{ item.name }}</span>
+					<span class="app-sections__layout-titles--pct">{{ ((item.end - item.start) / virtualSize * 100).toFixed(1) }}%</span>
+				</p>
+			</div>
+			<div class="app-sections__layout-graph select--none text">
+				<span
+					v-for="item in virtualItems"
+					:style="{
+						'left': (item.start / virtualSize * 100).toFixed(1) + '%',
+						'width': ((item.end - item.start) / virtualSize * 100).toFixed(1) + '%',
+						'background-color': item.color,
+					}"
+					:title="item.name"
+				>{{ item.name }}</span>
+			</div>
+		</section>
+	</article>
+</template>
+<template id="dock-main">
+	<div class="dock-main">
+		<dock-sidebar></dock-sidebar>
+		<component v-for="{page, instance} in uistate.pageInstances" :key="instance.key" :is="page.component" :instance="instance"></component>
+	</div>
+</template>
+<template id="dock-sidebar">
+	<nav class="dock-sidebar select--none">
+		<template v-for="group in uistate.groups">
+			<h2>{{ group.title }}</h2>
+			<div
+				v-for="page in group.pages"
+				:class="{
+					selected: page == activePage,
+					enabled: page.enabled,
+					disabled: !page.enabled,
+				}"
+				@click.prevent="open(page)"
+			>
+				{{ page.title }}
+			</div>
+		</template>
+	</nav>
+</template>
+<template id="dock-window">
+	<div class="dock-window select--none" :style="style" @mousedown="resizeWindow">
+		<div class="dock-window__client">
+			<h2 class="dock-window__title" @mousedown="dragWindow">{{ title }}</h2>
+			<div class="dock-window__slot select--text"><component :is="componentName" :data="componentData" @set-title="setTitle"></slot></div>
+		</div>
+	</div>
+</template>
+<template id="resources-hexed">
+	<table class="monospace resources-hexed">
+		<tr>
+			<td></td>
+			<th v-for="col in 16" class="select--none">{{ (col - 1).toString(16).padStart(2, '0') }}</th>
+			<td></td>
+		</tr>
+		<tr v-for="row in data_rows">
+			<th class="select--none">{{ row.offset.toString(16).padStart(8, '0') }}</th>
+			<td v-for="byte in row.bytes">{{ byte.toString(16).padStart(2, '0') }}</td>
+			<td v-for="_ in 16 - row.bytes.length"></td>
+			<td>{{ row.ascii }}</td>
+		</tr>
+	</table>
+</template>
+<template id="resources-manifest">
+	<article class="resources-manifest">
+		<h3>Manifest</h3>
+		<template v-if="error">
+			<p>There was an error reading the Manifest:</p>
+			<p>{{ error }}</p>
+		</template>
+		<template v-else-if="!manifest">
+			<p>There is no Manifest.</p>
+		</template>
+		<template v-else>
+			<textarea readonly="readonly" style="height: 20rem;">{{ manifest }}</textarea>
+		</template>
+	</article>
+</template>
+<template id="resources-preview">
+	<article class="resources-preview">
+		<div>
+			<label>Path:</label><input type="text" v-model="instance.path" @keyup.enter="loadPreview">
+			<label>Viewer:</label><select @input="setViewer($event.target.value)"><option value="utf-8">UTF-8</option><option value="hexdump">Hexdump</option></select>
+		</div>
+		<p v-if="error">{{ error }}</p>
+		<p v-else-if="!dataBytes">File not found.</p>
+		<template v-if="dataEntry">
+			<h3>Data Entry</h4>
+			<table v-if="dataEntry" class="entries">
+				<tr><th class="text">Address</th><td class="number">{{ hex(dataEntry.address) }}</td></tr>
+				<tr><th class="text">Size</th><td class="number">{{ hex(dataEntry.size) }}</td></tr>
+				<tr><th class="text">CodePage</th><td class="number">{{ hex(dataEntry.code_page) }}</td></tr>
+			</table>
+			<template v-if="dataBytes">
+				<h3>Preview</h3>
+				<textarea v-if="viewer == 'utf-8'" readonly="readonly">{{ previewUtf8 }}</textarea>
+				<textarea v-if="viewer == 'hexdump'" readonly="readonly">{{ previewHexDump }}</textarea>
+			</template>
+		</template>
+	</article>
+</template>
+<template id="pe-resources">
+	<article class="pe-resources">
+		<template v-if="error">
+			<p>There was an error reading the Resources:</p>
+			<p>{{ error }}</p>
+		</template>
+		<template v-else-if="!resourcesTree">
+			<p>There are no Resources.</p>
+		</template>
+		<template v-else>
+			<h3>Resources</h3>
+			<section>
+				<div class="resources-tree__ls">
+					<ul class="select--none">
+						<li v-for="entry in resources" :class="['icon', chooseIcon(entry)]">
+							<label @click="clickEntry(entry)">{{ entry.name }}</label>
+							<ul v-if="opened[entry.path]">
+								<li v-for="data in entry.directory" :class="['icon', chooseIcon(data)]">
+									<label :class="{ selected: preview && preview.path == data.path, unselected: !(preview && preview.path == data.path) }" @click="clickEntry(data)">{{ data.name }}</label>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+				<div v-if="preview" class="resources-tree__preview">
+					<div class="w3stab select--none">
+						<button @click="viewer = 'info'" :class="{ active: viewer == 'info' }">Info</button>
+						<button @click="viewer = 'hex'" :class="{ active: viewer == 'hex' }">Hex</button>
+						<button @click="viewer = 'text'" :class="{ active: viewer == 'text' }">Text</button>
+						<button @click="viewer = 'unicode'" :class="{ active: viewer == 'unicode' }">Unicode</button>
+						<button @click="viewer = 'image'" :class="{ active: viewer == 'image' }">Image</button>
+						<button @click="saveAs()">Download</button>
+					</div>
+					<div class="w3stabcontent">
+						<table v-if="viewer == 'info'" class="entries">
+							<tr><th class="text">Path</th><td class="text">{{ preview.path }}</td></tr>
+							<tr><th class="text">Address</th><td class="number">{{ hex(preview.data.address) }}</td></tr>
+							<tr><th class="text">Size</th><td class="number">{{ hex(preview.data.size) }}</td></tr>
+							<tr><th class="text">CodePage</th><td class="number">{{ hex(preview.data.code_page) }}</td></tr>
+						</table>
+						<resources-hexed v-if="viewer == 'hex'" :data="previewAsHex"></resources-hexed>
+						<textarea v-if="viewer == 'text'" rows="24">{{ previewAsText }}</textarea>
+						<textarea v-if="viewer == 'unicode'" rows="24">{{ previewAsUnicode }}</textarea>
+						<img v-if="viewer == 'image'" :src="previewAsURL">
+					</div>
+				</div>
+			</section>
+		</template>
+	</article>
+</template>
+<template id="resources-versioninfo">
+	<article class="resources-versioninfo">
+		<template v-if="error">
+			<p>There was an error reading the Version Info:</p>
+			<p>{{ error }}</p>
+		</template>
+		<template v-else-if="!versionInfo">
+			<p>There is no Version Info.</p>
+		</template>
+		<template v-else>
+			<h3>Version Info</h3>
+			<table class="entries">
+				<tr v-for="[key, value] in Object.entries(versionInfo.fixed)">
+					<th class="text">{{ key.substring(2) }}</th>
+					<td class="number">{{ display(value) }}</td>
+				</tr>
+			</table>
+			<template v-for="lang in versionInfo.langs">
+				<h3>Language {{ lang }}</h3>
+				<table class="entries">
+					<tr v-for="[key, value] in Object.entries(versionInfo.strings[lang])">
+						<th class="text">{{ key }}</th>
+						<td class="text">{{ value }}</td>
+					</tr>
+				</table>
+			</template>
+		</template>
+	</article>
+</template>
+<div id="app">
+	<app-main></app-main>
+</div>
+<noscript>PeKit is a WebApp and requires JS.</noscript>
+</body>
+
+<script>
+"use strict"
+
+Vue.component('app-header', {
+	data: function() {
+		return {
+			pekit: this.$root.$data.pekit,
+		};
+	},
+	methods: {
+		closeFile: function() {
+			this.pekit.closeFile();
+			this.$root.$data.uistate = null;
+		},
+	},
+	template: '#app-header',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-main', {
+	data: function() {
+		return {
+			pelite: peliteStore.state,
+			pekit: this.$root.$data.pekit,
+		};
+	},
+	computed: {
+		componentName: function() {
+			if (!this.pelite.ready) {
+				return 'app-splash';
+			}
+			else if (this.pekit.hasFile()) {
+				return 'dock-main';
+			}
+			else {
+				return 'app-upload';
+			}
+		},
+	},
+	template: '#app-main',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-splash', {
+	'data': function() {
+		return {
+			pelite: peliteStore.state,
+		};
+	},
+	computed: {
+		'ready': function() {
+			return this.pelite.ready;
+		}
+	},
+	template: '#app-splash',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-status', {
+	data: function() {
+		return {
+			pekit: this.$root.$data.pekit,
+		};
+	},
+	template: '#app-status',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-upload', {
+	data: function() {
+		return {
+			pekit: this.$root.$data.pekit,
+		};
+	},
+	methods: {
+		submit: function(files) {
+			if (files.length != 1) {
+				alert("Please submit a single file.");
+				return;
+			}
+			let file = files[0];
+			this.pekit.readFile(file);
+			this.loadFromPeKit();
+		},
+		loadFromPeKit() {
+			let headers = new UIGroupStore("Headers", [
+				new UIPageStore("Overview", AppOverviewStore),
+				new UIPageStore("DOS Header", AppDosHeaderStore),
+				new UIPageStore("NT Headers", AppNtHeadersStore),
+				new UIPageStore("Section Headers", AppSectionsStore),
+				new UIPageStore("Rich Structure", AppRichStructureStore),
+				new UIPageStore("Exports", AppExportsStore),
+				new UIPageStore("Imports", AppImportsStore),
+			]);
+			let resources = new UIGroupStore("Resources", [
+				new UIPageStore("Resources", PeResourcesStore),
+				new UIPageStore("Version Info", ResourcesVersionInfoStore),
+				new UIPageStore("Manifest", ResourcesManifestStore),
+				// new UIPageStore("Icons"),
+			]);
+			let analysis = new UIGroupStore("Analysis", [
+				new UIPageStore("Scanner", AppScannerStore),
+				// new UIPageStore("Strings"),
+			]);
+			let uistate = new UIStateStore([headers, resources, analysis])
+			uistate.open(headers.pages[0], null);
+			this.$root.$data.uistate = uistate;
+		},
+	},
+	template: '#app-upload',
+});
+</script>
+<script>
+"use strict"
+
+function sleep(ms) {
+	return new Promise(ms === undefined ? resolve => requestAnimationFrame(resolve) : resolve => setTimeout(resolve, ms));
+}
+function hex(value) {
+	return value == 0 ? "0" : "0x" + value.toString(16);
+}
+function display(value) {
+	if (typeof value == "number") {
+		return hex(value);
+	}
+	else if (typeof value == "string") {
+		return value;
+	}
+	else if (Array.isArray(value)) {
+		return value.map(el => display(el)).join("\n");
+	}
+	else {
+		return "" + value;
+	}
+}
+</script>
+<script>
+"use strict"
+
+class AppDosHeaderStore {
+	constructor(options) {}
+}
+AppDosHeaderStore.COMPONENT_NAME = 'app-dosheader';
+
+Vue.component('app-dosheader', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: AppDosHeaderStore,
+	},
+	computed: {
+		dosHeader: function() {
+			return this.pefile.dosHeader();
+		},
+	},
+	methods: {
+		display: display,
+	},
+	template: '#app-dosheader',
+});
+</script>
+<script>
+"use strict"
+
+class AppExportsStore {
+	constructor(options) {}
+}
+AppExportsStore.COMPONENT_NAME = 'app-exports';
+
+Vue.component('app-exports', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: AppExportsStore,
+	},
+	computed: {
+		exports: function() {
+			return this.pefile.exports();
+		},
+		names: function() {
+			return Object.entries(this.exports.names);
+		},
+		symbols: function() {
+			let names = new Array(this.exports.functions.length);
+			this.names.forEach(([name, index]) => {
+				names[index] = names[index] || [];
+				names[index].push(name);
+			});
+			let symbols = this.exports.functions.map((address, index) => ({
+				empty: address == 0 && !names[index],
+				address: hex(address),
+				ordinal: this.exports.ordinal_base + index,
+				names: names[index],
+			})).filter(sym => !sym.empty);
+			return symbols;
+		},
+	},
+	methods: {
+		hex: hex,
+		display: display,
+	},
+	template: '#app-exports',
+});
+</script>
+<script>
+"use strict"
+
+class AppImportsStore {
+	constructor(options) {}
+}
+AppImportsStore.COMPONENT_NAME = 'app-imports';
+
+Vue.component('app-imports', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+			state: {},
+		};
+	},
+	props: {
+		instance: AppImportsStore,
+	},
+	computed: {
+		imports: function() {
+			return this.pefile.imports();
+		},
+	},
+	methods: {
+		expand: function(dll_name) {
+			Vue.set(this.state, dll_name, true);
+		},
+		expandAll: function() {
+			for (let imp of this.imports) {
+				Vue.set(this.state, imp.dll_name, true);
+			}
+		},
+		collapse: function(dll_name) {
+			Vue.set(this.state, dll_name, false);
+		},
+		collapseAll: function() {
+			this.state = {};
+		},
+		toggle: function(dll_name) {
+			Vue.set(this.state, dll_name, !this.state[dll_name]);
+		},
+	},
+	template: '#app-imports',
+});
+</script>
+<script>
+"use strict"
+
+class AppNtHeadersStore {
+	constructor(options) {}
+}
+AppNtHeadersStore.COMPONENT_NAME = 'app-ntheaders';
+
+Vue.component('app-ntheaders', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: AppNtHeadersStore,
+	},
+	computed: {
+		headers: function() {
+			return this.pefile.headers();
+		},
+		ntHeaders: function() {
+			return this.headers.NtHeaders;
+		},
+		fileHeader: function() {
+			return this.headers.FileHeader;
+		},
+		optionalHeader: function() {
+			return this.headers.OptionalHeader;
+		},
+		dataDirectory: function() {
+			let dataDir = [];
+			for (let i = 0; i < this.headers.DataDirectory.length; i++) {
+				if (this.headers.DataDirectory[i].VirtualAddress != 0) {
+					let name = this.headers.details['DataDirectory.Names'][i];
+					let section = this.headers.details['DataDirectory.Sections'][i];
+					let sectionName = section !== null ? this.headers.SectionHeaders[section].Name : "";
+					let address = this.headers.DataDirectory[i].VirtualAddress;
+					let size = this.headers.DataDirectory[i].Size;
+					dataDir.push({ name: name, section: sectionName, address: address, size: size });
+				}
+			}
+			return dataDir;
+		},
+	},
+	methods: {
+		display: display,
+		detail: function(header, key, value) {
+			if (header + '.' + key in this.headers.details) {
+				let detail = this.headers.details[header + '.' + key];
+				if (Array.isArray(detail)) {
+					return detail.map(el => display(el)).join("\n");
+				}
+				else {
+					return display(detail);
+				}
+			}
+			else if (key == "TimeDateStamp") {
+				return new Date(value * 1000).toString();
+			}
+			return "";
+		},
+	},
+	template: '#app-ntheaders',
+});
+</script>
+<script>
+"use strict"
+
+class AppOverviewStore {
+	constructor(options) {}
+}
+AppOverviewStore.COMPONENT_NAME = 'app-overview';
+
+Vue.component('app-overview', {
+	data: function() {
+		return {
+			pekit: this.$root.$data.pekit,
+		};
+	},
+	props: {
+		instance: AppOverviewStore,
+	},
+	template: '#app-overview',
+});
+</script>
+<script>
+"use strict"
+
+class AppRichStructureStore {
+	constructor(options) {}
+}
+AppRichStructureStore.COMPONENT_NAME = 'app-richstructure';
+
+Vue.component('app-richstructure', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: AppRichStructureStore,
+	},
+	computed: {
+		error: function() {
+			try {
+				let _ = this.pefile.richStructure();
+				return null;
+			}
+			catch (ex) {
+				return ex;
+			}
+		},
+		richStructure: function() {
+			return this.pefile.richStructure();
+		},
+		isValid: function() {
+			return this.richStructure.xor_key == this.richStructure.checksum;
+		},
+	},
+	methods: {
+		hex: hex,
+	},
+	template: '#app-richstructure',
+});
+</script>
+<script>
+"use strict"
+
+class AppScannerStore {
+	constructor(options) {
+		this.pattern = "";
+		this.limit = 1000;
+		this.range = null;
+	}
+}
+AppScannerStore.COMPONENT_NAME = 'app-analysis-scanner';
+
+Vue.component('app-analysis-scanner', {
+	data() {
+		return {
+			pekit: this.$root.$data.pekit,
+			error: null,
+			matches: null,
+			processing: false,
+			limit: 1000,
+			hex: hex,
+		};
+	},
+	props: {
+		instance: AppScannerStore,
+	},
+	computed: {
+		sections() {
+			return this.pekit.pefile.sectionHeaders();
+		},
+	},
+	methods: {
+		async scan() {
+			if (this.processing) {
+				return;
+			}
+			this.error = null;
+			this.matches = null;
+			if (this.instance.pattern) {
+				this.processing = true;
+				// Limit the limit itself for our sanity
+				let limit = Math.min(Math.max(9, this.instance.limit), 99999);
+				this.limit = limit;
+				let start = 0, end = 0;
+				if (this.instance.range) {
+					start = this.instance.range.start;
+					end = this.instance.range.end;
+				}
+				else {
+					end = this.pekit.pefile.optionalHeader().SizeOfImage;
+				}
+				// Run next tick to let the GUI update with the new processing information
+				// await this.$nextTick(); // WHY DOES THIS NOT WORK???
+				await sleep(); await sleep();
+				let result = this.pekit.pefile.scannerMatches(this.instance.pattern, start, end, 0, limit);
+				if (result instanceof Error) {
+					this.error = result;
+				}
+				else {
+					this.matches = result;
+				}
+				this.processing = false;
+			}
+		},
+		setRange(value) {
+			if (value) {
+				var match = value.match(/^(\d+)\.\.(\d+)$/);
+				let start = parseInt(match[1]);
+				let end = parseInt(match[2]);
+				this.instance.range = { start: start, end: end };
+			}
+			else {
+				this.instance.range = null;
+			}
+		},
+	},
+	template: '#app-analysis-scanner',
+});
+</script>
+<script>
+"use strict"
+
+class AppSectionsStore {
+	constructor(data) {
+		this.data = data;
+	}
+}
+AppSectionsStore.COMPONENT_NAME = 'app-sections';
+
+Vue.component('app-sections', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: AppSectionsStore,
+	},
+	computed: {
+		headers: function() {
+			return this.pefile.headers();
+		},
+		sectionHeaders: function() {
+			return this.headers.SectionHeaders;
+		},
+		sections: function() {
+			return this.sectionHeaders.map((sect, i) => ({
+				Name: sect.Name,
+				VirtualAddress: hex(sect.VirtualAddress),
+				VirtualSize: hex(sect.VirtualSize),
+				PointerToRawData: hex(sect.PointerToRawData),
+				SizeOfRawData: hex(sect.SizeOfRawData),
+				Characteristics: hex(sect.Characteristics),
+				details: this.headers.details['SectionHeaders.Characteristics'][i].join('\n'),
+			}));
+		},
+		virtualItems: function() {
+			return this.sectionHeaders
+				.filter(sect => sect.VirtualAddress != 0 && sect.VirtualSize != 0)
+				.map(sect => ({
+					name: sect.Name,
+					start: sect.VirtualAddress,
+					end: sect.VirtualAddress + sect.VirtualSize,
+					color: this.charsColor(sect.Characteristics),
+				}));
+		},
+		virtualSize: function() {
+			return this.pefile.optionalHeader().SizeOfImage;
+		},
+	},
+	methods: {
+		charsColor: function(chars) {
+			if (chars & 0x20000000) {
+				if (chars & 0x80000000) {
+					return 'hsl(0, 50%, 50%)';
+				}
+				else {
+					return 'hsl(60, 50%, 50%)';
+				}
+			}
+			if (chars & 0x80000000) {
+				return 'hsl(210, 50%, 50%)';
+			}
+			else {
+				return 'hsl(120, 50%, 50%)';
+			}
+		},
+	},
+	template: '#app-sections',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('dock-main', {
+	data: function() {
+		return {
+			uistate: this.$root.$data.uistate,
+		};
+	},
+	template: '#dock-main',
+});
+</script>
+<script>
+Vue.component('dock-sidebar', {
+	data: function() {
+		return {
+			uistate: this.$root.$data.uistate,
+		};
+	},
+	computed: {
+		activePage: function() {
+			if (this.uistate.pageInstances.length > 0) {
+				return this.uistate.pageInstances[this.uistate.pageInstances.length - 1].page;
+			}
+			else {
+				return null;
+			}
+		},
+	},
+	methods: {
+		open: function(page) {
+			this.uistate.open(page, null);
+		},
+	},
+	template: '#dock-sidebar',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('dock-window', {
+	data: function() {
+		return {
+			x: 0,
+			y: 0,
+			width: 400,
+			height: 300,
+			minWidth: 200,
+			minHeight: 150,
+			title: "",
+			dragging: false,
+		};
+	},
+	props: {
+		"componentName": String,
+		"componentData": Object,
+	},
+	computed: {
+		style: function() {
+			return {
+				left: this.x + "px",
+				top: this.y + "px",
+				width: this.width + "px",
+				height: this.height + "px",
+			}
+		},
+	},
+	methods: {
+		setTitle: function(title) {
+			this.title = title;
+		},
+		dragWindow: function(e) {
+			if (e.button != 0)
+				return;
+			e.preventDefault();
+			this.dragging = true;
+			let mousemove = e => {
+				e.preventDefault();
+				this.x += e.movementX;
+				this.y += e.movementY;
+			};
+			let mouseup = e => {
+				e.preventDefault();
+				this.dragging = false;
+				document.removeEventListener('mousemove', mousemove, false);
+				document.removeEventListener('mouseup', mouseup, false);
+				document.body.classList.remove('dock-window--dragging');
+			};
+			document.addEventListener('mousemove', mousemove, false);
+			document.addEventListener('mouseup', mouseup, false);
+			document.body.classList.add('dock-window--dragging');
+		},
+		resizeWindow: function(e) {
+			if (e.target != e.currentTarget)
+				return;
+
+			let rect = e.target.getBoundingClientRect();
+			let x = e.clientX - rect.left;
+			let y = e.clientY - rect.top;
+			let margin = 5;
+
+			let cursor = "dock-window--ns-resize";
+			if (x < margin) {
+				cursor = "dock-window--ew-resize";
+				if (y < margin) {
+					cursor = "dock-window--nwse-resize";
+				}
+				else if (y >= rect.height - margin) {
+					cursor = "dock-window--nesw-resize";
+				}
+			}
+			else if (x >= rect.width - margin) {
+				cursor = "dock-window--ew-resize";
+				if (y < margin) {
+					cursor = "dock-window--nesw-resize";
+				}
+				else if (y >= rect.height - margin) {
+					cursor = "dock-window--nwse-resize";
+				}
+			}
+
+			let desiredWidth = rect.width;
+			let desiredHeight = rect.height;
+			let mousemove = e => {
+				if (x < margin) {
+					this.x += e.movementX;
+					desiredWidth -= e.movementX;
+					this.width = Math.max(desiredWidth, this.minWidth);
+				}
+				if (y < margin) {
+					this.y += e.movementY;
+					desiredHeight -= e.movementY;
+					this.height = Math.max(desiredHeight, this.minHeight);
+				}
+				if (x >= rect.width - margin) {
+					desiredWidth += e.movementX;
+					this.width = Math.max(desiredWidth, this.minWidth);
+				}
+				if (y >= rect.height - margin) {
+					desiredHeight += e.movementY;
+					this.height = Math.max(desiredHeight, this.minHeight);
+				}
+			};
+			let mouseup = e => {
+				document.removeEventListener('mousemove', mousemove, false);
+				document.removeEventListener('mouseup', mouseup, false);
+				document.body.classList.remove(cursor);
+			};
+			document.addEventListener('mousemove', mousemove, false);
+			document.addEventListener('mouseup', mouseup, false);
+			document.body.classList.add(cursor);
+		},
+	},
+	template: '#dock-window',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('resources-hexed', {
+	data: function() {
+		return {};
+	},
+	computed: {
+		data_rows: function() {
+			let length = ((this.data.byteLength - 1) / 16 + 1) | 0;
+			let rows = [];
+			for (let i = 0; i < length; ++i) {
+				let offset = i * 16;
+				let bytes = new Uint8Array(this.data.buffer, this.data.byteOffset + offset, Math.min(16, this.data.byteLength - offset));
+				let ascii = Array.from(bytes).map(byte => byte >= 32 && byte < 0x7f ? String.fromCharCode(byte) : '·').join('');
+				rows.push({ offset, bytes, ascii });
+			}
+			return rows;
+		},
+	},
+	props: {
+		data: Uint8Array,
+	},
+	template: '#resources-hexed',
+});
+</script>
+<script>
+"use strict"
+
+class ResourcesManifestStore {
+	constructor(options) {}
+}
+ResourcesManifestStore.COMPONENT_NAME = 'resources-manifest';
+
+Vue.component('resources-manifest', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: ResourcesManifestStore,
+	},
+	computed: {
+		error: function() {
+			try {
+				let _ = this.pefile.resourcesManifest();
+				return null;
+			}
+			catch (ex) {
+				return ex;
+			}
+		},
+		manifest: function() {
+			return this.pefile.resourcesManifest();
+		},
+	},
+	template: '#resources-manifest',
+});
+</script>
+<script>
+"use strict"
+
+class ResourcesPreview {
+	constructor(options) {
+		this.path = options ? options.path || "" : "";
+	}
+}
+ResourcesPreview.COMPONENT_NAME = 'resources-preview';
+
+Vue.component('resources-preview', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+			dataEntry: null,
+			dataBytes: null,
+			error: null,
+			viewer: 'utf-8',
+		};
+	},
+	props: {
+		instance: ResourcesPreview,
+	},
+	computed: {
+		previewHexDump: function() {
+			let hex = "";
+			if (this.dataBytes) {
+				for (let i = 0; i < this.dataBytes.length; ++i) {
+					hex += this.dataBytes[i].toString(16).padStart(2, '0');
+				}
+			}
+			return hex;
+		},
+		previewUtf8: function() {
+			if (!this.dataBytes) {
+				return "";
+			}
+			return new TextDecoder('utf-8').decode(this.dataBytes);
+		},
+	},
+	watch: {
+		instance: {
+			path: function(newPath, oldPath) {
+				this.loadPreview();
+			},
+		},
+	},
+	methods: {
+		hex: hex,
+		loadPreview: function() {
+			this.error = null;
+			this.dataEntry = null;
+			this.dataBytes = null;
+			try {
+				this.dataEntry = this.pefile.resourcesFindData(this.instance.path);
+				if (this.dataEntry) {
+					this.dataBytes = this.pefile.resourcesReadData(this.dataEntry);
+				}
+			}
+			catch (ex) {
+				this.error = ex;
+			}
+		},
+		setViewer: function(value) {
+			this.viewer = value;
+		},
+	},
+	mounted: function() {
+		this.loadPreview();
+	},
+	template: '#resources-preview',
+});
+</script>
+<script>
+"use strict"
+
+class PeResourcesStore {
+	constructor(options) {}
+}
+PeResourcesStore.COMPONENT_NAME = 'pe-resources';
+
+Vue.component('pe-resources', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+			viewer: 'info',
+			preview: null,
+			opened: {},
+		};
+	},
+	props: {
+		instance: PeResourcesStore,
+	},
+	computed: {
+		error: function() {
+			try {
+				let _ = this.pefile.resourcesTree();
+				return null;
+			}
+			catch (ex) {
+				return ex;
+			}
+		},
+		resourcesTree: function() {
+			return this.pefile.resourcesTree();
+		},
+		resources: function() {
+			let N = name => (typeof name == "number" ? "#" : "") + name;
+			let tree = this.resourcesTree;
+			let opened = this.opened;
+			return tree.map(entry => {
+				if ('data' in entry) {
+					return { name: N(entry.name), data: entry.data, path: '/' + N(entry.name) };
+				}
+				if ('directory' in entry) {
+					let children = [];
+					(function flatten(prefixes, directory) {
+						directory.forEach(child => {
+							let components = [...prefixes, N(child.name)];
+							let name = components.join(" : ");
+							let path = '/' + N(entry.name) + '/' + components.join('/');
+							if ('data' in child) {
+								children.push({ name: name, data: child.data, path: path });
+							}
+							else if ('directory' in child) {
+								flatten(components, child.directory);
+							}
+						});
+					})([], entry.directory);
+					return { name: N(entry.name), directory: children, path: '/' + N(entry.name) };
+				}
+				return entry;
+			});
+		},
+		previewAsBytes: function() {
+			try {
+				return this.pefile.resourcesReadData(this.preview.data);
+			}
+			catch (ex) {
+				return new Uint8Array();
+			}
+		},
+		previewAsHex: function() {
+			return this.confirm() ? this.previewAsBytes : new Uint8Array();
+		},
+		previewAsText: function() {
+			return this.confirm() ? new TextDecoder('utf-8').decode(this.previewAsBytes) : "";
+		},
+		previewAsUnicode: function() {
+			return this.confirm() ? new TextDecoder('utf-16le').decode(this.previewAsBytes) : "";
+		},
+		previewAsBlob: function() {
+			return new Blob([this.previewAsBytes]);
+		},
+		previewAsURL: function() {
+			if (this.previewURL) {
+				URL.revokeObjectURL(this.previewURL);
+				this.previewURL = null;
+			}
+			this.previewURL = URL.createObjectURL(this.previewAsBlob);
+			return this.previewURL;
+		},
+	},
+	methods: {
+		hex: hex,
+		chooseIcon: function(entry) {
+			if ('data' in entry) {
+				return 'icon-blank';
+			}
+			else if ('directory' in entry) {
+				return this.opened[entry.path] ? 'icon-dir-opened' : 'icon-dir-closed';
+			}
+		},
+		clickEntry: function(entry) {
+			if ('data' in entry) {
+				this.preview = entry;
+			}
+			else if ('directory' in entry) {
+				Vue.set(this.opened, entry.path, !this.opened[entry.path]);
+			}
+		},
+		confirm: function() {
+			if (this.preview.data.size > 0x4000) {
+				if (!window.confirm("This resource's size is " + Math.round(this.preview.data.size / 1024) + " KiB.\nSuch large resources can take your browser time to display.\nAre you sure you want to preview?")) {
+					this.viewer = 'info';
+					return false;
+				}
+			}
+			return true;
+		},
+		saveAs: function() {
+			saveAs(this.previewAsBlob);
+		},
+	},
+	template: '#pe-resources',
+});
+</script>
+<script>
+"use strict"
+
+class ResourcesVersionInfoStore {
+	constructor(options) {}
+}
+ResourcesVersionInfoStore.COMPONENT_NAME = 'resources-versioninfo';
+
+Vue.component('resources-versioninfo', {
+	data: function() {
+		return {
+			pefile: this.$root.$data.pekit.pefile,
+		};
+	},
+	props: {
+		instance: ResourcesVersionInfoStore,
+	},
+	computed: {
+		error: function() {
+			try {
+				let _ = this.pefile.resourcesVersionInfo();
+				return null;
+			}
+			catch (ex) {
+				return ex;
+			}
+		},
+		versionInfo: function() {
+			return this.pefile.resourcesVersionInfo();
+		},
+	},
+	methods: {
+		display: display,
+	},
+	template: '#resources-versioninfo',
+});
+</script>
+<script>
+"use strict"
+
+class PeKitStore {
+	constructor() {
+		this.fileReader = new FileReader();
+		this.pefile = null;
+		this.filename = null;
+		this.statusMessage = "";
+		this.statusError = null;
+		window.pekit = this;
+	}
+	readFile(file) {
+		// If any file was already loading, abort it
+		if (this.fileReader.state == FileReader.LOADING) {
+			this.fileReader.abort();
+		}
+		this.pefile = null;
+		this.filename = file.name;
+		this.statusMessage = "Loading " + file.name + "...";
+		this.fileReader.onload = () => {
+			this.statusMessage = "Loaded " + file.name;
+			this.loadFile(this.fileReader.result, file.name);
+		};
+		this.fileReader.onerror = reason => {
+			this.statusMessage = "Error " + file.name + "!";
+			this.statusError = Object.freeze(reason);
+		};
+		this.fileReader.readAsArrayBuffer(file);
+	}
+	loadFile(buffer, filename) {
+		let pefile = Object.freeze(peliteStore.instance.PeFile.fromBuffer(buffer));
+		try {
+			let _ = pefile.headers();
+			this.pefile = pefile;
+			window.pefile = this.pefile;
+			this.filename = filename;
+		}
+		catch (ex) {
+			this.statusMessage = "Error " + filename + "!";
+			this.statusError = ex;
+		}
+	}
+	loadingFile() {
+		return this.fileReader.state == FileReader.LOADING;
+	}
+	hasFile() {
+		return this.pefile !== null;
+	}
+	closeFile() {
+		this.pefile = null;
+		this.filename = null;
+	}
+}
+</script>
+<script>
+"use strict"
+
+class PeLiteStore {
+	constructor() {
+		this.instance = null;
+		this.state = {
+			ready: false,
+			error: false,
+			reason: null,
+		};
+		pelite("pelite.wasm").then(value => {
+			this.instance = value;
+			this.state.ready = true;
+		}, reason => {
+			this.state.error = true;
+			this.state.reason = reason;
+		});
+	}
+}
+var peliteStore = new PeLiteStore();
+</script>
+<script>
+"use strict"
+
+class UIStateStore {
+	constructor(groups) {
+		this.groups = groups;
+		this.pageInstances = [];
+		this.runningKey = 0;
+		window.uistate = this;
+	}
+	open(page, options) {
+		// If we are given no options, the user clicked on the navbar
+		if (options == null) {
+			// Try to reuse the last known existing instance
+			let foundIndex = this.pageInstances.map(el => el.page).lastIndexOf(page);
+			if (foundIndex >= 0) {
+				// Push the the found instance to the front of the UI
+				let found = this.pageInstances[foundIndex];
+				this.pageInstances.splice(foundIndex, 1);
+				this.pageInstances.push(found);
+				return;
+			}
+		}
+		// Create a new instance with given options
+		let instance = new page.factory(options);
+		instance.key = this.runningKey++; // Vue needs a unique key...
+		// Add the new instance to the front of the UI
+		this.pageInstances.push({ page: page, instance: instance });
+	}
+}
+
+class UIGroupStore {
+	constructor(title, pages) {
+		this.title = title;
+		this.pages = pages;
+		this.expanded = true;
+	}
+}
+
+class UIPageStore {
+	constructor(title, factory) {
+		this.title = title;
+		this.component = factory.COMPONENT_NAME;
+		this.factory = factory;
+		this.enabled = true;
+	}
+}
+</script>
+<script>
+var app = new Vue({
+	el: '#app',
+	data: {
+		pekit: new PeKitStore(),
+		uistate: null,
+	},
+});
+</script>
+</html>
+
