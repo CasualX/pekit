@@ -1,0 +1,27 @@
+<div *ngIf="result">
+	<div class="header">
+		<div *ngFor="let desc of result.imports">
+			<p>{{ desc.dll_name }}</p>
+			<p>{{ desc.int.length }} imports</p>
+		</div>
+	</div>
+	<div class="details">
+		<div *ngFor="let desc of result.imports">
+			<h3>{{ desc.dll_name }}</h3>
+			<p>{{ desc.int.length }} imports</p>
+			<table>
+				<tr>
+					<th>Hint</th>
+					<th>Name</th>
+				</tr>
+				<tr *ngFor="let imp of desc.int">
+					<td *ngIf="imp.ByName">{{ imp.ByName.hint }}</td>
+					<td *ngIf="imp.ByName">{{ imp.ByName.name }}</td>
+					<td *ngIf="imp.ByOrdinal">ord</td>
+					<td *ngIf="imp.ByOrdinal">{{ imp.ByOrdinal.ord }}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+

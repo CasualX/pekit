@@ -1,0 +1,67 @@
+<div class="container" *ngIf="result">
+	<div>
+		<h3>DOS Header</h3>
+		<table>
+			<tr>
+				<th>Property</th>
+				<th>Value</th>
+			</tr>
+			<tr *ngFor="let kv of dos_header">
+				<td>{{ kv[0] }}</td>
+				<td>{{ kv[1] }}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div>
+		<h3>File Header</h3>
+		<table>
+			<tr>
+				<th>Property</th>
+				<th>Value</th>
+			</tr>
+			<tr *ngFor="let kv of file_header">
+				<td>{{ kv[0] }}</td>
+				<td>{{ kv[1] }}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div>
+		<h3>Optional Header</h3>
+		<table>
+			<tr>
+				<th>Property</th>
+				<th>Value</th>
+			</tr>
+			<tr *ngFor="let kv of optional_header">
+				<td>{{ kv[0] }}</td>
+				<td>{{ kv[1] }}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div>
+		<h3>Data Directory</h3>
+		<table>
+			<tr>
+				<th *ngFor="let key of data_directory_keys">{{ key }}</th>
+			</tr>
+			<tr *ngFor="let datadir of data_directory_array">
+				<td *ngFor="let key of data_directory_keys">{{ datadir[key] }}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div>
+		<h3>Section Headers</h3>
+		<table>
+			<tr>
+				<th *ngFor="let key of section_headers_keys">{{ key }}</th>
+			</tr>
+			<tr *ngFor="let section of section_headers_array">
+				<td *ngFor="let key of section_headers_keys">{{ section[key] }}</td>
+			</tr>
+		</table>
+	</div>
+</div>

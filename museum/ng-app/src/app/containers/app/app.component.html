@@ -1,0 +1,28 @@
+<mat-sidenav-container class="sidenav-container">
+	<mat-sidenav #drawer class="sidenav" fixedInViewport="true" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+	 [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="!(isHandset$ | async)">
+		<mat-toolbar color="primary">Menu</mat-toolbar>
+		<mat-nav-list>
+			<a mat-list-item routerLink="/">Index</a>
+			<a mat-list-item routerLink="/output">Output</a>
+			<a mat-list-item routerLink="/headers">Headers</a>
+			<a mat-list-item routerLink="/imports">Imports</a>
+		</mat-nav-list>
+	</mat-sidenav>
+	<mat-sidenav-content>
+		<mat-toolbar color="primary">
+			<button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()" *ngIf="isHandset$ | async">
+				<mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+			</button>
+			<span>PE Kit Angular</span>
+		</mat-toolbar>
+		<mat-card>
+			<app-fileinput [result]="result" [errorMsg]="error" (image)="handleImage($event)"></app-fileinput>
+			<router-outlet></router-outlet>
+			<!-- Routed views go here
+			<app-pekit-output [json]="result"></app-pekit-output>
+			<app-pekit-headers [headers]="result.headers"></app-pekit-headers>
+			<app-pekit-imports [imports]="result.imports"></app-pekit-imports> -->
+		</mat-card>
+	</mat-sidenav-content>
+</mat-sidenav-container>

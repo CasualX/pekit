@@ -1,0 +1,130 @@
+
+/*
+ * Reset thingies
+ */
+
+html, body, body>div {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	max-height: 100%;
+	min-height: 100%;
+	width: 100%;
+	max-width: 100%;
+	min-width: 100%;
+	overflow: hidden;
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+
+/*
+ * General purpose formatting
+ */
+
+.number {
+	text-align: right;
+}
+.hex {
+	font-family: 'Courier New', Courier, monospace;
+	text-align: right;
+}
+.hex:before {
+	content: "0x";
+}
+.symbol {
+	font-size: small;
+}
+
+/*
+ * The main container
+ */
+
+/*
+ * The header
+ */
+
+header {
+	background-color: lightblue;
+}
+
+/*
+ * The tab control index
+ */
+
+#Viewer > .index {
+	display: flex;
+	flex-direction: row;
+	margin: 0;
+	padding: 0.5em 0.2em 0 0.2em;
+	border-style: none none solid none;
+	border-width: thin;
+	background-color: darkgrey;
+}
+#Viewer > .index > .button {
+	cursor: pointer;
+	list-style: none;
+	margin: 0 0.2em;
+	padding: 0 1em;
+	border-style: solid;
+	border-width: thin;
+	border-radius: 0.2em 0.2em 0 0;
+	border-bottom-color: lightgrey;
+	background-color: lightgrey;
+	position: relative;
+	top: 1px;
+}
+#Viewer > .index > .button:not(.current) {
+	background-color: darkgrey;
+	border-bottom-color: black;
+}
+#Viewer > .index > .button > h2 {
+	margin: 0;
+}
+
+/*
+ * The tab control content
+ */
+
+#Viewer > .content {
+	background-color: lightgrey;
+	height: 100%;
+	overflow: scroll;
+}
+
+#Output textarea {
+	width: 100%;
+	box-sizing: border-box;
+	resize: vertical;
+}
+
+#Headers {
+	display: grid;
+	grid-template: auto auto auto / auto auto;
+}
+#Headers > .fileHeader {
+	grid-row: 1 / span 1;
+	grid-column: 2 / span 1;
+}
+#Headers > .optionalHeader {
+	grid-row: 1 / span 2;
+	grid-column: 1 / span 1;
+}
+#Headers > .dataDirectory {
+	grid-row: 2 / span 1;
+	grid-column: 2 / span 1;
+}
+#Headers > .sectionHeaders {
+	grid-row: 3 / span 1;
+	grid-column: 1 / span 2;
+}
+
+#Imports > .index {
+	display: none;
+}
+#Imports > .details {
+	display: flex;
+	flex-direction: row;
+}

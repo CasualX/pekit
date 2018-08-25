@@ -1,0 +1,42 @@
+Imagine a new toolkit for PE files
+
+pekit dump
+	[-h|--headers]=[dos,nt,file,opt,dir]
+	[-f|--format]=[json,debug]
+	[-d|--directory]=[imports,exports,base-relocs,debug,load-config,resx,tls]
+	[-s|--section]=.text
+	[-v|--verbose]
+	file.dll
+
+pekit hexdump 0x2000..0x2400
+
+pekit rebase -ofile.dll file.dll 0x1000000
+
+pekit pack -ofile.dll dump.bin
+
+pekit resx dir path/to/folder
+pekit resx ls path/to/file
+pekit resx rm path/to/file
+pekit resx put [-i|--input=][inputfile.txt] path/to/file << stdin
+
+pekit section alloc <FILESIZE> <VIRTUALSIZE>
+pekit section edit ".text" rwx
+
+pekit address 0x200_[rva,va,fo] [rva,va,fo]
+
+pekit findsig <FILE> [PAT]
+
+pe.dos_header
+pe.nt_headers
+pe.nt_headers.FileHeader
+pe.nt_headers.OptionalHeader
+pe.nt_headers.OptionalHeader.DataDirectory[]
+pe.section_headers[]
+
+pe.directory.imports[]
+pe.directory.imports[].dll_name
+pe.directory.imports[].iat[]
+pe.directory.imports[].int[]
+pe.directory.imports[].int[].hint
+pe.directory.imports[].int[].name
+pe.directory.imports[].int[].ordinal

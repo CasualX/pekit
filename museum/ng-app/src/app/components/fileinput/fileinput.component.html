@@ -1,0 +1,6 @@
+<div>
+	<input type="file" #fileinput>
+	<input type="button" value="Submit" (click)="loadFile(fileinput.files)">
+</div>
+<p>{{message}}</p>
+<p *ngIf="errorMsg" style="color: red;">{{errorMsg}}</p>
