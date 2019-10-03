@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>PeKit</title>
+	<script src="deps/vue.js"></script>
+	<script src="deps/FileSaver.min.js"></script>
+	<script type="text/javascript" src="pelite.js"></script>
+$STYLES$
+</head>
+<body>
+$TEMPLATES$
+<div id="app">
+	<app-main></app-main>
+</div>
+<noscript>PeKit is a WebApp and requires JS.</noscript>
+</body>
+$SCRIPTS$
+<script>
+var app = new Vue({
+	el: '#app',
+	data: {
+		pekit: new PeKitStore(),
+		uistate: null,
+	},
+});
+</script>
+</html>
