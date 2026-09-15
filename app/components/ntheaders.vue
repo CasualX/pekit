@@ -1,33 +1,19 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class AppNtHeadersStore {
-	constructor(options) {}
-}
-AppNtHeadersStore.COMPONENT_NAME = 'app-ntheaders';
-
-Vue.component('app-ntheaders', {
-	data: function() {
-		return {
-			pefile: this.$root.$data.pekit.pefile,
-		};
-	},
+const AppNtHeaders = Vue.defineComponent({
 	props: {
-		instance: AppNtHeadersStore,
+		value: /** @type {any} */ (null),
 	},
 	computed: {
 		headers: function() {
-			return this.pefile.headers();
+			return /** @type {PeHeaders} */ (this.value);
 		},
 		ntHeaders: function() {
 			return this.headers.NtHeaders;
-		},
-		fileHeader: function() {
-			return this.headers.FileHeader;
-		},
-		optionalHeader: function() {
-			return this.headers.OptionalHeader;
 		},
 		dataDirectory: function() {
 			let dataDir = [];

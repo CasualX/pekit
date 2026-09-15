@@ -1,12 +1,17 @@
+<link rel="component" href="header.vue">
+<link rel="component" href="status.vue">
+<link rel="component" href="pelite.vue.js">
+<link rel="component" href="splash.vue" dynamic>
+<link rel="component" href="upload.vue" dynamic>
+<link rel="component" href="workspace.vue" dynamic>
 
 <script>
 "use strict"
 
-Vue.component('app-main', {
+const AppMain = Vue.defineComponent({
 	data: function() {
 		return {
-			pelite: peliteStore.state,
-			pekit: this.$root.$data.pekit,
+			pelite: appState.pelite,
 		};
 	},
 	computed: {
@@ -14,8 +19,8 @@ Vue.component('app-main', {
 			if (!this.pelite.ready) {
 				return 'app-splash';
 			}
-			else if (this.pekit.hasFile()) {
-				return 'dock-main';
+			else if (this.pelite.hasFile() && appState.pages !== null) {
+				return 'app-workspace';
 			}
 			else {
 				return 'app-upload';
@@ -24,6 +29,45 @@ Vue.component('app-main', {
 	},
 	template: '#app-main',
 });
+
+const appState = Vue.reactive({
+	pelite: peliteBridge,
+	pages: /** @type {any[]|null} */ (null),
+});
+
+const app = Vue.createApp({
+	data() {
+		return appState;
+	},
+});
+
+Object.entries({
+	'app-main': AppMain,
+	'app-header': AppHeader,
+	'app-status': AppStatus,
+	'app-splash': AppSplash,
+	'app-upload': AppUpload,
+	'app-workspace': AppWorkspace,
+	'app-overview': AppOverview,
+	'app-dosheader': AppDosHeader,
+	'app-ntheaders': AppNtHeaders,
+	'app-sections': AppSections,
+	'app-richstructure': AppRichStructure,
+	'app-exports': AppExports,
+	'app-imports': AppImports,
+	'page-result': PageResult,
+	'pe-resources': PeResources,
+	'resources-hexed': ResourcesHexed,
+	'resources-versioninfo': ResourcesVersionInfo,
+	'resources-manifest': ResourcesManifest,
+	'app-analysis-scanner': AppScanner,
+}).forEach(([name, component]) => app.component(name, component));
+
+app.config.errorHandler = (error, instance, info) => {
+	console.error(`Vue error in ${info}`, error, instance);
+};
+
+app.mount('#app');
 </script>
 
 <template id="app-main">

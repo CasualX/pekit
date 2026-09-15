@@ -1,47 +1,39 @@
 
+<link rel="component" href="../utils.vue">
+<link rel="component" href="../styles/w3stab.vue">
+<link rel="component" href="hexed.vue">
+
 <script>
 "use strict"
 
-class PeResourcesStore {
-	constructor(options) {}
-}
-PeResourcesStore.COMPONENT_NAME = 'pe-resources';
-
-Vue.component('pe-resources', {
+const PeResources = Vue.defineComponent({
 	data: function() {
 		return {
-			pefile: this.$root.$data.pekit.pefile,
 			viewer: 'info',
-			preview: null,
-			opened: {},
+			preview: /** @type {any} */ (null),
+			previewURL: /** @type {string|null} */ (null),
+			opened: /** @type {Record<string, boolean>} */ ({}),
 		};
 	},
 	props: {
-		instance: PeResourcesStore,
+		value: /** @type {any} */ (null),
+		pefile: /** @type {any} */ (null),
 	},
 	computed: {
-		error: function() {
-			try {
-				let _ = this.pefile.resourcesTree();
-				return null;
-			}
-			catch (ex) {
-				return ex;
-			}
-		},
-		resourcesTree: function() {
-			return this.pefile.resourcesTree();
-		},
 		resources: function() {
 			let N = name => (typeof name == "number" ? "#" : "") + name;
-			let tree = this.resourcesTree;
+			let tree = /** @type {NonNullable<PeResourcesTree>} */ (this.value || []);
 			let opened = this.opened;
 			return tree.map(entry => {
 				if ('data' in entry) {
 					return { name: N(entry.name), data: entry.data, path: '/' + N(entry.name) };
 				}
 				if ('directory' in entry) {
-					let children = [];
+					let children = /** @type {any[]} */ ([]);
+					/**
+					 * @param {string[]} prefixes
+					 * @param {any[]} directory
+					 */
 					(function flatten(prefixes, directory) {
 						directory.forEach(child => {
 							let components = [...prefixes, N(child.name)];
@@ -54,19 +46,15 @@ Vue.component('pe-resources', {
 								flatten(components, child.directory);
 							}
 						});
-					})([], entry.directory);
+					})(/** @type {string[]} */ ([]), entry.directory);
 					return { name: N(entry.name), directory: children, path: '/' + N(entry.name) };
 				}
 				return entry;
 			});
 		},
 		previewAsBytes: function() {
-			try {
-				return this.pefile.resourcesReadData(this.preview.data);
-			}
-			catch (ex) {
-				return new Uint8Array();
-			}
+			let result = (/** @type {PeFileInstance} */ (this.pefile)).resourcesReadData(this.preview.data);
+			return result instanceof Uint8Array ? result : new Uint8Array();
 		},
 		previewAsHex: function() {
 			return this.confirm() ? this.previewAsBytes : new Uint8Array();
@@ -78,7 +66,7 @@ Vue.component('pe-resources', {
 			return this.confirm() ? new TextDecoder('utf-16le').decode(this.previewAsBytes) : "";
 		},
 		previewAsBlob: function() {
-			return new Blob([this.previewAsBytes]);
+			return new Blob([new Uint8Array(this.previewAsBytes).buffer]);
 		},
 		previewAsURL: function() {
 			if (this.previewURL) {
@@ -104,7 +92,7 @@ Vue.component('pe-resources', {
 				this.preview = entry;
 			}
 			else if ('directory' in entry) {
-				Vue.set(this.opened, entry.path, !this.opened[entry.path]);
+				this.opened[entry.path] = !this.opened[entry.path];
 			}
 		},
 		confirm: function() {
@@ -117,7 +105,7 @@ Vue.component('pe-resources', {
 			return true;
 		},
 		saveAs: function() {
-			saveAs(this.previewAsBlob);
+			(/** @type {any} */ (window)).saveAs(this.previewAsBlob);
 		},
 	},
 	template: '#pe-resources',
@@ -126,11 +114,7 @@ Vue.component('pe-resources', {
 
 <template id="pe-resources">
 	<article class="pe-resources">
-		<template v-if="error">
-			<p>There was an error reading the Resources:</p>
-			<p>{{ error }}</p>
-		</template>
-		<template v-else-if="!resourcesTree">
+		<template v-if="!value">
 			<p>There are no Resources.</p>
 		</template>
 		<template v-else>

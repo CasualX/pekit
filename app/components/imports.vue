@@ -2,43 +2,37 @@
 <script>
 "use strict"
 
-class AppImportsStore {
-	constructor(options) {}
-}
-AppImportsStore.COMPONENT_NAME = 'app-imports';
-
-Vue.component('app-imports', {
+const AppImports = Vue.defineComponent({
 	data: function() {
 		return {
-			pefile: this.$root.$data.pekit.pefile,
 			state: {},
 		};
 	},
 	props: {
-		instance: AppImportsStore,
+		value: /** @type {any} */ (null),
 	},
 	computed: {
 		imports: function() {
-			return this.pefile.imports();
+			return /** @type {NonNullable<PeImports>} */ (this.value || []);
 		},
 	},
 	methods: {
 		expand: function(dll_name) {
-			Vue.set(this.state, dll_name, true);
+			this.state[dll_name] = true;
 		},
 		expandAll: function() {
 			for (let imp of this.imports) {
-				Vue.set(this.state, imp.dll_name, true);
+				this.state[imp.dll_name] = true;
 			}
 		},
 		collapse: function(dll_name) {
-			Vue.set(this.state, dll_name, false);
+			this.state[dll_name] = false;
 		},
 		collapseAll: function() {
 			this.state = {};
 		},
 		toggle: function(dll_name) {
-			Vue.set(this.state, dll_name, !this.state[dll_name]);
+			this.state[dll_name] = !this.state[dll_name];
 		},
 	},
 	template: '#app-imports',
@@ -47,6 +41,8 @@ Vue.component('app-imports', {
 
 <template id="app-imports">
 	<article class="app-imports">
+		<p v-if="!value">There are no imports.</p>
+		<template v-else>
 		<p><button @click="expandAll()">Expand All</button> <button @click="collapseAll()">Collapse All</button></p>
 		<template v-for="desc in imports">
 			<template v-if="desc.int">
@@ -74,6 +70,7 @@ Vue.component('app-imports', {
 				<h3 class="collapsed">{{ desc.dll_name }}</h3>
 				<p>Error reading the import name table.</p>
 			</template>
+		</template>
 		</template>
 	</article>
 </template>

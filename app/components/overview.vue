@@ -5,19 +5,9 @@
 <script>
 "use strict"
 
-class AppOverviewStore {
-	constructor(options) {}
-}
-AppOverviewStore.COMPONENT_NAME = 'app-overview';
-
-Vue.component('app-overview', {
-	data: function() {
-		return {
-			pekit: this.$root.$data.pekit,
-		};
-	},
+const AppOverview = Vue.defineComponent({
 	props: {
-		instance: AppOverviewStore,
+		value: /** @type {any} */ (null),
 	},
 	template: '#app-overview',
 });

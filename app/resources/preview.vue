@@ -9,10 +9,10 @@ class ResourcesPreview {
 }
 ResourcesPreview.COMPONENT_NAME = 'resources-preview';
 
-Vue.component('resources-preview', {
+const ResourcesPreviewComponent = Vue.defineComponent({
 	data: function() {
 		return {
-			pefile: this.$root.$data.pekit.pefile,
+			pefile: appState.pelite.pefile,
 			dataEntry: null,
 			dataBytes: null,
 			error: null,
@@ -52,14 +52,19 @@ Vue.component('resources-preview', {
 			this.error = null;
 			this.dataEntry = null;
 			this.dataBytes = null;
-			try {
-				this.dataEntry = this.pefile.resourcesFindData(this.instance.path);
-				if (this.dataEntry) {
-					this.dataBytes = this.pefile.resourcesReadData(this.dataEntry);
-				}
+			let dataEntry = this.pefile.resourcesFindData(this.instance.path);
+			if (dataEntry instanceof Error) {
+				this.error = dataEntry;
+				return;
 			}
-			catch (ex) {
-				this.error = ex;
+			this.dataEntry = dataEntry;
+			if (this.dataEntry) {
+				let dataBytes = this.pefile.resourcesReadData(this.dataEntry);
+				if (dataBytes instanceof Error) {
+					this.error = dataBytes;
+					return;
+				}
+				this.dataBytes = dataBytes;
 			}
 		},
 		setViewer: function(value) {
@@ -82,7 +87,7 @@ Vue.component('resources-preview', {
 		<p v-if="error">{{ error }}</p>
 		<p v-else-if="!dataBytes">File not found.</p>
 		<template v-if="dataEntry">
-			<h3>Data Entry</h4>
+			<h3>Data Entry</h3>
 			<table v-if="dataEntry" class="entries">
 				<tr><th class="text">Address</th><td class="number">{{ hex(dataEntry.address) }}</td></tr>
 				<tr><th class="text">Size</th><td class="number">{{ hex(dataEntry.size) }}</td></tr>

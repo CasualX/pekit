@@ -1,6 +1,6 @@
 # PeKit
 
-Work in Progress, published on [casualhacks.net](https://casualhacks.net/PeKitV2/).
+Work in Progress, published on [casualhacks.net](https://casualhacks.net/pekit/).
 
 License
 -------

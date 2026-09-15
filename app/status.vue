@@ -2,10 +2,10 @@
 <script>
 "use strict"
 
-Vue.component('app-status', {
+const AppStatus = Vue.defineComponent({
 	data: function() {
 		return {
-			pekit: this.$root.$data.pekit,
+			pelite: appState.pelite,
 		};
 	},
 	template: '#app-status',
@@ -13,7 +13,7 @@ Vue.component('app-status', {
 </script>
 
 <template id="app-status">
-	<div class="app-status">{{ pekit.statusMessage }}</div>
+	<div class="app-status">{{ pelite.statusMessage }}</div>
 </template>
 
 <style>

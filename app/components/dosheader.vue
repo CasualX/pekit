@@ -1,25 +1,12 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class AppDosHeaderStore {
-	constructor(options) {}
-}
-AppDosHeaderStore.COMPONENT_NAME = 'app-dosheader';
-
-Vue.component('app-dosheader', {
-	data: function() {
-		return {
-			pefile: this.$root.$data.pekit.pefile,
-		};
-	},
+const AppDosHeader = Vue.defineComponent({
 	props: {
-		instance: AppDosHeaderStore,
-	},
-	computed: {
-		dosHeader: function() {
-			return this.pefile.dosHeader();
-		},
+		value: /** @type {any} */ (null),
 	},
 	methods: {
 		display: display,
@@ -32,9 +19,9 @@ Vue.component('app-dosheader', {
 	<article class="app-dosheader">
 		<h3>DOS Header</h3>
 		<table class="entries">
-			<tr v-for="[key, value] in Object.entries(dosHeader)">
+			<tr v-for="[key, field] in Object.entries(value)">
 				<th class="text">{{ key }}</th>
-				<td class="number">{{ display(value) }}</td>
+				<td class="number">{{ display(field) }}</td>
 			</tr>
 		</table>
 	</article>

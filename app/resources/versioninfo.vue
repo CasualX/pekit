@@ -1,33 +1,16 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class ResourcesVersionInfoStore {
-	constructor(options) {}
-}
-ResourcesVersionInfoStore.COMPONENT_NAME = 'resources-versioninfo';
-
-Vue.component('resources-versioninfo', {
-	data: function() {
-		return {
-			pefile: this.$root.$data.pekit.pefile,
-		};
-	},
+const ResourcesVersionInfo = Vue.defineComponent({
 	props: {
-		instance: ResourcesVersionInfoStore,
+		value: /** @type {any} */ (null),
 	},
 	computed: {
-		error: function() {
-			try {
-				let _ = this.pefile.resourcesVersionInfo();
-				return null;
-			}
-			catch (ex) {
-				return ex;
-			}
-		},
 		versionInfo: function() {
-			return this.pefile.resourcesVersionInfo();
+			return /** @type {PeVersionInfo} */ (this.value);
 		},
 	},
 	methods: {
@@ -39,11 +22,7 @@ Vue.component('resources-versioninfo', {
 
 <template id="resources-versioninfo">
 	<article class="resources-versioninfo">
-		<template v-if="error">
-			<p>There was an error reading the Version Info:</p>
-			<p>{{ error }}</p>
-		</template>
-		<template v-else-if="!versionInfo">
+		<template v-if="!versionInfo">
 			<p>There is no Version Info.</p>
 		</template>
 		<template v-else>

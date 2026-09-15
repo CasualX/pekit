@@ -2,7 +2,7 @@
 <script>
 "use strict"
 
-Vue.component('resources-hexed', {
+const ResourcesHexed = Vue.defineComponent({
 	data: function() {
 		return {};
 	},

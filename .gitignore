@@ -1,0 +1,6 @@
+# Node.js
+node_modules/
+package-lock.json
+
+# Vue-Script
+dist/index.html

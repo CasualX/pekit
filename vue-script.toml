@@ -1,0 +1,13 @@
+[app]
+page = "app/page.html"
+main = "app/main.vue"
+
+[target]
+path = "dist/index.html"
+
+[check]
+target = "es2022"
+typescript = "node_modules/.bin/tsc"
+
+[serve]
+watch = "app/**/*"

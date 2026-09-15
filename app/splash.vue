@@ -5,10 +5,10 @@ The splash screen, hides loading pelite wasm.
 <script>
 "use strict"
 
-Vue.component('app-splash', {
+const AppSplash = Vue.defineComponent({
 	'data': function() {
 		return {
-			pelite: peliteStore.state,
+			pelite: appState.pelite,
 		};
 	},
 	computed: {
@@ -22,7 +22,7 @@ Vue.component('app-splash', {
 
 <template id="app-splash">
 	<article class="app-splash">
-		<p v-if="pelite.error">Loading PeLite WASM...<span class="app-splash__error"> {{ pelite.reason }}</span></p>
+		<p v-if="pelite.initializationError">Loading PeLite WASM...<span class="app-splash__error"> {{ pelite.initializationError }}</span></p>
 	</article>
 </template>
 

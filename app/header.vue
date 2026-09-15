@@ -2,16 +2,16 @@
 <script>
 "use strict"
 
-Vue.component('app-header', {
+const AppHeader = Vue.defineComponent({
 	data: function() {
 		return {
-			pekit: this.$root.$data.pekit,
+			pelite: appState.pelite,
 		};
 	},
 	methods: {
 		closeFile: function() {
-			this.pekit.closeFile();
-			this.$root.$data.uistate = null;
+			this.pelite.closeFile();
+			appState.pages = null;
 		},
 	},
 	template: '#app-header',
@@ -21,7 +21,7 @@ Vue.component('app-header', {
 <template id="app-header">
 	<header class="app-header">
 		<h1 class="select--none">PeKit</h1>
-		<div v-if="pekit.hasFile()" class="app-header__command"><span class="app-header__command--filename">{{ pekit.filename }}</span><span class="app-header__command--X select--none" @click="closeFile">✖</span></div>
+		<div v-if="pelite.hasFile()" class="app-header__command"><span class="app-header__command--filename">{{ pelite.filename }}</span><span class="app-header__command--X select--none" @click="closeFile">✖</span></div>
 	</header>
 </template>
 
@@ -42,7 +42,7 @@ Vue.component('app-header', {
 	right: 0;
 	top: 0;
 }
-.app-header__filename {
+.app-header__command--filename {
 	color: #ddd;
 }
 .app-header__command--X {

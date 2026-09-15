@@ -1,36 +1,19 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class AppRichStructureStore {
-	constructor(options) {}
-}
-AppRichStructureStore.COMPONENT_NAME = 'app-richstructure';
-
-Vue.component('app-richstructure', {
-	data: function() {
-		return {
-			pefile: this.$root.$data.pekit.pefile,
-		};
-	},
+const AppRichStructure = Vue.defineComponent({
 	props: {
-		instance: AppRichStructureStore,
+		value: /** @type {any} */ (null),
 	},
 	computed: {
-		error: function() {
-			try {
-				let _ = this.pefile.richStructure();
-				return null;
-			}
-			catch (ex) {
-				return ex;
-			}
-		},
 		richStructure: function() {
-			return this.pefile.richStructure();
+			return /** @type {PeRichStructure} */ (this.value);
 		},
 		isValid: function() {
-			return this.richStructure.xor_key == this.richStructure.checksum;
+			return this.richStructure !== null && this.richStructure.xor_key == this.richStructure.checksum;
 		},
 	},
 	methods: {
@@ -42,11 +25,7 @@ Vue.component('app-richstructure', {
 
 <template id="app-richstructure">
 	<article class="app-richstructure">
-		<template v-if="error">
-			<p>There was an error reading the RichStructure:</p>
-			<p>{{ error }}</p>
-		</template>
-		<template v-else-if="!richStructure">
+		<template v-if="!richStructure">
 			<p>There is no RichStructure.</p>
 		</template>
 		<template v-else>

@@ -1,56 +1,55 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class AppScannerStore {
-	constructor(options) {
-		this.pattern = "";
-		this.limit = 1000;
-		this.range = null;
-	}
-}
-AppScannerStore.COMPONENT_NAME = 'app-analysis-scanner';
-
-Vue.component('app-analysis-scanner', {
+const AppScanner = Vue.defineComponent({
 	data: function() {
 		return {
-			pekit: this.$root.$data.pekit,
-			error: null,
-			matches: null,
-			limit: null,
+			pattern: "",
+			requestedLimit: 1000,
+			range: /** @type {{start: number, end: number}|null} */ (null),
+			error: /** @type {Error|null} */ (null),
+			matches: /** @type {number[][]|null} */ (null),
+			limit: /** @type {number|null} */ (null),
 			hex: hex,
 		};
 	},
 	props: {
-		instance: AppScannerStore,
+		value: /** @type {any} */ (null),
+		pefile: /** @type {any} */ (null),
 	},
 	computed: {
+		pageData: function() {
+			return /** @type {PeScannerData} */ (this.value);
+		},
 		sections: function() {
-			return this.pekit.pefile.sectionHeaders();
+			return this.pageData.sections;
 		},
 	},
 	methods: {
 		scan: function() {
 			this.error = null;
-			this.instance.matches = null;
-			if (this.instance.pattern) {
-				try {
-					// Limit the limit itself for our sanity
-					let limit = Math.min(Math.max(9, this.instance.limit), 99999);
-					let start = 0, end = 0;
-					if (this.instance.range) {
-						start = this.instance.range.start;
-						end = this.instance.range.end;
-					}
-					else {
-						end = this.pekit.pefile.optionalHeader().SizeOfImage;
-					}
-					this.matches = this.pekit.pefile.scannerMatches(this.instance.pattern, start, end, 0, limit);
-					this.limit = limit;
+			this.matches = null;
+			if (this.pattern) {
+				// Limit the limit itself for our sanity
+				let limit = Math.min(Math.max(9, this.requestedLimit), 99999);
+				let start = 0, end = 0;
+				if (this.range) {
+					start = this.range.start;
+					end = this.range.end;
 				}
-				catch (ex) {
-					this.error = ex;
+				else {
+					end = this.pageData.imageSize;
 				}
+				let matches = (/** @type {PeFileInstance} */ (this.pefile)).scannerMatches(this.pattern, start, end, 0, limit);
+				if (matches instanceof Error) {
+					this.error = matches;
+					return;
+				}
+				this.matches = matches;
+				this.limit = limit;
 			}
 		},
 		setRange: function(value) {
@@ -58,10 +57,10 @@ Vue.component('app-analysis-scanner', {
 				var match = value.match(/^(\d+)\.\.(\d+)$/);
 				let start = parseInt(match[1]);
 				let end = parseInt(match[2]);
-				this.instance.range = { start: start, end: end };
+				this.range = { start: start, end: end };
 			}
 			else {
-				this.instance.range = null;
+				this.range = null;
 			}
 		},
 	},
@@ -72,13 +71,13 @@ Vue.component('app-analysis-scanner', {
 <template id="app-analysis-scanner">
 	<article class="app-analysis-scanner">
 		<h3>Scanner</h3>
-		<div class="app-analysis-scanner__pattern">
-			<input type="text" v-model="instance.pattern" @keyup.enter="scan">
-			<a href="https://docs.rs/pelite/*/pelite/pattern/fn.parse.html" title="Information about the pattern syntax">?</a>
-		</div>
-		<div class="app-analysis__options">
-			<div><label>Limit matches:</label><input type="number" v-model="instance.limit"></div>
-			<div><label>Limit range:</label><select @input="setRange($event.target.value)"><option value="" selected>image</option><option v-for="sect in sections" :value="sect.VirtualAddress + '..' + sect.VirtualSize">{{ sect.Name }}</option></select></div>
+		<div class="app-analysis-scanner__input">
+			<div>
+				<label>Pattern <a href="https://docs.rs/pelite/*/pelite/pattern/fn.parse.html" title="Information about the pattern syntax" target="_blank" rel="noopener noreferrer">?</a></label>
+				<input type="text" v-model="pattern" @keyup.enter="scan">
+			</div>
+			<div><label>Limit matches</label><input type="number" v-model="requestedLimit"></div>
+			<div><label>Scan range</label><select @input="setRange($event.target.value)"><option value="" selected>image</option><option v-for="sect in sections" :value="sect.VirtualAddress + '..' + sect.VirtualSize">{{ sect.Name }}</option></select></div>
 		</div>
 		<p v-if="error">{{ error }}</p>
 		<template v-if="matches != null">
@@ -99,14 +98,29 @@ Vue.component('app-analysis-scanner', {
 </template>
 
 <style>
-.app-analysis-scanner__pattern {
+.app-analysis-scanner__input {
 	display: grid;
-	grid-template: auto / auto 1rem;
+	grid-template-columns: minmax(12rem, 1fr) 10rem 10rem;
+	gap: 1rem;
+	align-items: end;
 }
-.app-analysis-scanner__pattern > a {
-	text-align: center;
+.app-analysis-scanner__input label {
+	display: block;
+	margin-bottom: 0.25rem;
+}
+.app-analysis-scanner__input input,
+.app-analysis-scanner__input select {
+	box-sizing: border-box;
+	width: 100%;
+	height: 2rem;
 }
 .app-analysis-scanner__matches td {
 	width: 8rem;
+	padding: 0.2rem 0;
+}
+@media (max-width: 48rem) {
+	.app-analysis-scanner__input {
+		grid-template-columns: 1fr;
+	}
 }
 </style>

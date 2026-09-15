@@ -1,3 +1,61 @@
+/**
+ * @typedef {(address: number, ...args: number[]) => void} PeFileExport
+ */
+
+/**
+ * The exports provided by pelite.wasm.
+ *
+ * Keeping this declaration here makes the dynamically loaded WASM boundary
+ * explicit while allowing the rest of this module to be checked normally.
+ *
+ * @typedef {Object} PeLiteExports
+ * @property {WebAssembly.Memory} memory
+ * @property {(length: number) => number} bytesAllocate
+ * @property {(ptr: number, len: number) => number} pefileNew
+ * @property {PeFileExport} pefileDosHeader
+ * @property {PeFileExport} pefileDosImage
+ * @property {PeFileExport} pefileNtHeaders
+ * @property {PeFileExport} pefileFileHeader
+ * @property {PeFileExport} pefileOptionalHeader
+ * @property {PeFileExport} pefileDataDirectory
+ * @property {PeFileExport} pefileSectionHeaders
+ * @property {PeFileExport} pefileHeaders
+ * @property {PeFileExport} pefileSlice
+ * @property {PeFileExport} pefileSliceBytes
+ * @property {PeFileExport} pefileSliceArray
+ * @property {PeFileExport} pefileSliceCString
+ * @property {PeFileExport} pefileRichStructure
+ * @property {PeFileExport} pefileExports
+ * @property {PeFileExport} pefileImports
+ * @property {PeFileExport} pefileBaseRelocs
+ * @property {PeFileExport} pefileLoadConfig
+ * @property {PeFileExport} pefileTls
+ * @property {PeFileExport} pefileDebug
+ * @property {PeFileExport} pefileResourcesManifest
+ * @property {PeFileExport} pefileResourcesVersionInfo
+ * @property {PeFileExport} pefileResourcesTree
+ * @property {PeFileExport} pefileResourcesFindData
+ * @property {PeFileExport} pefileResourcesFindResource
+ * @property {PeFileExport} pefileResourcesFindResourceEx
+ * @property {PeFileExport} pefileScannerExec
+ * @property {PeFileExport} pefileScannerFinds
+ * @property {PeFileExport} pefileScannerFindsCode
+ * @property {PeFileExport} pefileScannerMatches
+ * @property {PeFileExport} pefileScannerMatchesCode
+ * @property {PeFileExport} pefileDrop
+ */
+
+/**
+ * @typedef {Int8Array|Uint8Array|Uint8ClampedArray|Int16Array|Uint16Array|Int32Array|Uint32Array|Float32Array|Float64Array|BigInt64Array|BigUint64Array} TypedArray
+ */
+
+/**
+ * @typedef {{readonly BYTES_PER_ELEMENT: number, new(buffer: ArrayBufferLike, byteOffset?: number, length?: number): TypedArray}} TypedArrayClass
+ */
+
+/**
+ * @typedef {{new(buffer: ArrayBufferLike, byteOffset?: number, length?: number): ArrayBufferView}} ArrayViewConstructor
+ */
 
 /**
  * Fetches the pelite wasm module and initializes its shared resources.
@@ -8,18 +66,22 @@
  * @example
  * ```
  * // Load the PeLite wasm library.
- * let pelite = await pelite("pelite.wasm");
+ * import createPeLite from "./pelite.js";
+ * const pelite = await createPeLite("pkg/pelite.wasm");
  * // Instantiate the PeFile class with an ArrayBuffer containing the executable.
- * let pefile = new pelite.PeFile(arrayBuffer);
+ * const pefile = pelite.PeFile.fromBuffer(arrayBuffer);
  * ```
  *
- * @param {string} wasmPath - Path to the wasm module.
- * @returns {PeLite}
+ * @param {string} [wasmPath="pkg/pelite.wasm"] - Path to the wasm module.
+ * Expected failures are returned as `Error` values instead of being thrown.
+ *
  */
-async function pelite(wasmPath) {
-	let textDecoder = new TextDecoder('utf-8');
-	let textEncoder = new TextEncoder('utf-8');
+export async function pelite(wasmPath = "pkg/pelite.wasm") {
+	const textDecoder = new TextDecoder("utf-8");
+	const textEncoder = new TextEncoder();
+	/** @type {unknown} */
 	let result = null;
+	/** @type {ArrayViewConstructor} */
 	let arrayConstructor = Uint8Array;
 	let imports = {
 		env: {
@@ -49,19 +111,32 @@ async function pelite(wasmPath) {
 		}
 	};
 	// Reads the result
+	/** @returns {unknown} */
 	function wrapResult() {
-		let localResult = result;
+		const localResult = result;
 		result = null;
 		arrayConstructor = Uint8Array;
 		return localResult;
 	}
 	async function load(wasmPath, imports) {
-		let response = await fetch(wasmPath);
-		let arrayBuffer = await response.arrayBuffer();
-		let wasm = await WebAssembly.instantiate(arrayBuffer, imports);
-		return wasm;
+		try {
+			const response = await fetch(wasmPath);
+			if (!response.ok) {
+				return new Error(`Unable to load ${wasmPath}: ${response.status} ${response.statusText}`);
+			}
+			const arrayBuffer = await response.arrayBuffer();
+			return await WebAssembly.instantiate(arrayBuffer, imports);
+		}
+		catch (error) {
+			return error instanceof Error ? error : new Error(String(error));
+		}
 	}
-	let { module, instance } = await load(wasmPath, imports);
+	const loaded = await load(wasmPath, imports);
+	if (loaded instanceof Error) {
+		return loaded;
+	}
+	const { module } = loaded;
+	const instance = /** @type {WebAssembly.Instance & {exports: PeLiteExports}} */ (loaded.instance);
 	function copyString(string) {
 		let array = textEncoder.encode(string);
 		let ptr = instance.exports.bytesAllocate(array.length);
@@ -76,15 +151,14 @@ async function pelite(wasmPath) {
 			return [0, name | 0]
 		}
 		else {
-			throw new Error("Resource names must be string or number, typeof("+name+") is "+typeof name);
+			return new Error("Resource names must be string or number, typeof("+name+") is "+typeof name);
 		}
 	}
 	/**
-	 * @typedef {Object} PeLite
-	 * @property {PeFile} PeFile - The PeFile parser class.
-	 */
-	/**
 	 * The PeFile parser.
+	 *
+	 * Unless documented otherwise, parsing methods return their normal value or
+	 * an `Error` value when parsing fails.
 	 */
 	class PeFile {
 		/**
@@ -93,19 +167,17 @@ async function pelite(wasmPath) {
 		 * @param {Number} ptr The address where the image is located in the WASM linear memory.
 		 * @param {Number} len The length of the image.
 		 */
-		 constructor(ptr, len) {
+		constructor(ptr, len) {
 			this.ptr = ptr;
 			this.len = len;
 			this.data = new Uint8Array(instance.exports.memory.buffer, ptr, len);
 			this.address = instance.exports.pefileNew(ptr, len);
-			if (this.address == 0)
-				throw wrapResult();
 		}
 		/**
 		 * Constructs a PeFile from ArrayBuffer.
 		 * @remarks Copies the ArrayBuffer to the WASM linear memory.
 		 * @param {ArrayBuffer} buffer - The bytes to parse as a PeFile.
-		 * @returns {PeFile}
+		 * @returns {PeFile|Error}
 		 */
 		static fromBuffer(buffer) {
 			// Allocate and copy the buffer's contents to the WASM linear memory
@@ -114,7 +186,12 @@ async function pelite(wasmPath) {
 			let data = new Uint8Array(instance.exports.memory.buffer, ptr, len);
 			data.set(new Uint8Array(buffer));
 			// Construct the PeFile
-			return new PeFile(ptr, len);
+			const pefile = new PeFile(ptr, len);
+			if (pefile.address === 0) {
+				const error = wrapResult();
+				return error instanceof Error ? error : new Error("Unable to parse PE headers");
+			}
+			return pefile;
 		}
 		/**
 		 * @typedef {Object} DosHeader
@@ -123,15 +200,16 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Gets the DOS header.
-		 * @returns {DosHeader}
+		 * @returns {DosHeader|Error}
 		 */
 		dosHeader() {
 			instance.exports.pefileDosHeader(this.address);
-			return wrapResult();
+			return /** @type {DosHeader|Error} */ (wrapResult());
 		}
+		/** @returns {Uint8Array|Error} */
 		dosImage() {
 			instance.exports.pefileDosImage(this.address);
-			return wrapResult();
+			return /** @type {Uint8Array|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} NtHeaders
@@ -141,11 +219,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Gets the NT headers.
-		 * @returns {NtHeaders}
+		 * @returns {NtHeaders|Error}
 		 */
 		ntHeaders() {
 			instance.exports.pefileNtHeaders(this.address);
-			return wrapResult();
+			return /** @type {NtHeaders|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} FileHeader
@@ -159,11 +237,11 @@ async function pelite(wasmPath) {
 		 * Gets the file header.
 		 * @remarks
 		 * The file header is part of the NT headers and can also be accessed with `file.ntHeaders().FileHeader`.
-		 * @returns {FileHeader}
+		 * @returns {FileHeader|Error}
 		 */
 		fileHeader() {
 			instance.exports.pefileFileHeader(this.address);
-			return wrapResult();
+			return /** @type {FileHeader|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} OptionalHeader
@@ -172,11 +250,11 @@ async function pelite(wasmPath) {
 		 * Gets the optional header.
 		 * @remarks
 		 * The optional header is part of the NT headers and can also be accessed with `file.ntHeaders().OptionalHeader`.
-		 * @returns {OptionalHeader}
+		 * @returns {OptionalHeader|Error}
 		 */
 		optionalHeader() {
 			instance.exports.pefileOptionalHeader(this.address);
-			return wrapResult();
+			return /** @type {OptionalHeader|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} DataDirectory
@@ -185,11 +263,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Gets the data directory.
-		 * @returns {DataDirectory[]}
+		 * @returns {DataDirectory[]|Error}
 		 */
 		dataDirectory() {
 			instance.exports.pefileDataDirectory(this.address);
-			return wrapResult();
+			return /** @type {DataDirectory[]|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} SectionHeader
@@ -202,55 +280,55 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Gets the section headers.
-		 * @returns {SectionHeader[]}
+		 * @returns {SectionHeader[]|Error}
 		 */
 		sectionHeaders() {
 			instance.exports.pefileSectionHeaders(this.address);
-			return wrapResult();
+			return /** @type {SectionHeader[]|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} HeaderDetails
 		 */
 		/**
 		 * Returns all the PE headers and additional details.
-		 * @returns {{DosHeader: DosHeader, NtHeaders: NtHeaders, DataDirectory: DataDirectory[], SectionHeaders: SectionHeader[], details: HeaderDetails}}
+		 * @returns {{DosHeader: DosHeader, NtHeaders: NtHeaders, DataDirectory: DataDirectory[], SectionHeaders: SectionHeader[], details: HeaderDetails}|Error}
 		 */
 		headers() {
 			instance.exports.pefileHeaders(this.address);
-			return wrapResult();
+			return /** @type {{DosHeader: DosHeader, NtHeaders: NtHeaders, DataDirectory: DataDirectory[], SectionHeaders: SectionHeader[], details: HeaderDetails}|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads a subslice from the image starting at the given address with unbounded length.
 		 * @param {Number} rva The relative virtual address.
 		 * @param {Number} minSize Minimum number of bytes that must be read.
 		 * @param {Number} align Alignment requirement, must be a power of two greater than zero.
-		 * @returns {Uint8Array}
+		 * @returns {Uint8Array|Error}
 		 */
 		slice(rva, minSize, align) {
 			instance.exports.pefileSlice(this.address, rva, minSize, align);
-			return wrapResult();
+			return /** @type {Uint8Array|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads a subslice from the image starting at the given address with unbounded length.
 		 * @remarks The returned array is a subarray of `this.data`.
 		 * @param {Number} rva The relative virtual address.
-		 * @returns {Uint8Array}
+		 * @returns {Uint8Array|Error}
 		 */
 		sliceBytes(rva) {
 			instance.exports.pefileSliceBytes(this.address, rva);
-			return wrapResult();
+			return /** @type {Uint8Array|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads and interprets a subslice of the image as a DataView.
 		 * @param {Number} rva The relative virtual address.
 		 * @param {Number} len The length of the structure in bytes.
 		 * @param {Number} align Alignment requirement, must be a power of two greater than zero.
-		 * @returns {DataView}
+		 * @returns {DataView|Error}
 		 */
 		sliceDataView(rva, len, align) {
 			arrayConstructor = DataView;
 			instance.exports.pefileSliceArray(this.address, rva, len, align);
-			return wrapResult();
+			return /** @type {DataView|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads and interprets a subslice of the image as a TypedArray.
@@ -258,35 +336,32 @@ async function pelite(wasmPath) {
 		 * @param {Number} rva The relative virtual address.
 		 * @param {Number} len The length of the array.
 		 * @param {TypedArrayClass} typedArray TypedArray class.
-		 * @returns {TypedArray}
+		 * @returns {TypedArray|Error}
 		 */
 		sliceArray(rva, len, typedArray) {
 			arrayConstructor = typedArray;
 			instance.exports.pefileSliceArray(this.address, rva, len, typedArray.BYTES_PER_ELEMENT);
-			return wrapResult();
+			return /** @type {TypedArray|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads a nul-terminated C string from the image.
 		 * @remarks The returned 'string' is a subarray of `this.data`.
 		 * @param {Number} rva The relative virtual address.
-		 * @returns {Uint8Array}
+		 * @returns {Uint8Array|Error}
 		 */
 		sliceCString(rva) {
 			instance.exports.pefileSliceCString(this.address, rva);
-			return wrapResult();
+			return /** @type {Uint8Array|Error} */ (wrapResult());
 		}
 		/**
 		 * Reads a nul-terminated UTF-8 string from the image.
 		 * @param {Number} rva The relative virtual address.
-		 * @returns {string}
+		 * @returns {string|Error}
 		 */
 		sliceUtf8String(rva) {
 			instance.exports.pefileSliceCString(this.address, rva);
-			let string = wrapResult();
-			if (string instanceof Uint8Array) {
-				string = textDecoder.decode(string);
-			}
-			return string;
+			const bytes = /** @type {Uint8Array|Error} */ (wrapResult());
+			return bytes instanceof Error ? bytes : textDecoder.decode(bytes);
 		}
 		/**
 		 * @typedef {Object} RichStructure
@@ -296,11 +371,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Rich Structure.
-		 * @returns {RichStructure|null}
+		 * @returns {RichStructure|null|Error}
 		 */
 		richStructure() {
 			instance.exports.pefileRichStructure(this.address);
-			return wrapResult();
+			return /** @type {RichStructure|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} Exports
@@ -313,11 +388,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Exports Directory.
-		 * @returns {Exports|null}
+		 * @returns {Exports|null|Error}
 		 */
 		exports() {
 			instance.exports.pefileExports(this.address);
-			return wrapResult();
+			return /** @type {Exports|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} ImportDescriptor
@@ -326,11 +401,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Imports Directory.
-		 * @returns {ImportDescriptor[]|null}
+		 * @returns {ImportDescriptor[]|null|Error}
 		 */
 		imports() {
 			instance.exports.pefileImports(this.address);
-			return wrapResult();
+			return /** @type {ImportDescriptor[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} BaseRelocs
@@ -339,11 +414,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Base Reloctions Directory.
-		 * @returns {BaseRelocs|null}
+		 * @returns {BaseRelocs|null|Error}
 		 */
 		baseRelocs() {
 			instance.exports.pefileBaseRelocs(this.address);
-			return wrapResult();
+			return /** @type {BaseRelocs|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} LoadConfig
@@ -352,11 +427,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Load Config Directory.
-		 * @returns {LoadConfig|null}
+		 * @returns {LoadConfig|null|Error}
 		 */
 		loadConfig() {
 			instance.exports.pefileLoadConfig(this.address);
-			return wrapResult();
+			return /** @type {LoadConfig|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} TLS
@@ -365,11 +440,11 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the TLS Directory.
-		 * @returns {TLS|null}
+		 * @returns {TLS|null|Error}
 		 */
 		tls() {
 			instance.exports.pefileTls(this.address);
-			return wrapResult();
+			return /** @type {TLS|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} DebugEntry
@@ -380,19 +455,19 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Debug Directory.
-		 * @returns {DebugEntry[]|null}
+		 * @returns {DebugEntry[]|null|Error}
 		 */
 		debug() {
 			instance.exports.pefileDebug(this.address);
-			return wrapResult();
+			return /** @type {DebugEntry[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds the Manifest.
-		 * @returns {string|null}
+		 * @returns {string|null|Error}
 		 */
 		resourcesManifest() {
 			instance.exports.pefileResourcesManifest(this.address);
-			return wrapResult();
+			return /** @type {string|null|Error} */ (wrapResult());
 		}
 		/**
 		 * @typedef {Object} VersionInfo
@@ -402,17 +477,14 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Finds the Version Info.
-		 * @returns {VersionInfo|null}
+		 * @returns {VersionInfo|null|Error}
 		 */
 		resourcesVersionInfo() {
 			instance.exports.pefileResourcesVersionInfo(this.address);
-			return wrapResult();
+			return /** @type {VersionInfo|null|Error} */ (wrapResult());
 		}
 		/**
-		 * @typedef {Object} DirectoryEntry
-		 * @property {string} name
-		 * @property {DirectoryEntry[]} directory
-		 * @property {DataEntry} data
+		 * @typedef {{name: string|number, directory: DirectoryEntry[]}|{name: string|number, data: DataEntry}} DirectoryEntry
 		 */
 		/**
 		 * @typedef {Object} DataEntry
@@ -422,18 +494,18 @@ async function pelite(wasmPath) {
 		 */
 		/**
 		 * Parses the Resources Directory.
-		 * @returns {DirectoryEntry[]|null}
+		 * @returns {DirectoryEntry[]|null|Error}
 		 */
 		resourcesTree() {
 			instance.exports.pefileResourcesTree(this.address);
-			return wrapResult();
+			return /** @type {DirectoryEntry[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds a data entry at the given path.
 		 * @param {string|null} path Absolute path to the resource.
 		 * Resource paths must start and separete components with a forward slash.
 		 * Id entries must be prefixed with a #.
-		 * @returns {DataEntry|null}
+		 * @returns {DataEntry|null|Error}
 		 */
 		resourcesFindData(path) {
 			if (!path) {
@@ -441,33 +513,37 @@ async function pelite(wasmPath) {
 			}
 			let [pathPtr, pathLen] = copyString(path);
 			instance.exports.pefileResourcesFindData(this.address, pathPtr, pathLen);
-			return wrapResult();
+			return /** @type {DataEntry|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Returns the bytes for the given data entry.
 		 * @remarks The returned array is a subarray of `this.data`.
 		 * @param {DataEntry|null} dataEntry The data entry.
-		 * @returns {Uint8Array|null}
+		 * @returns {Uint8Array|null|Error}
 		 */
 		resourcesReadData(dataEntry) {
 			if (!dataEntry) {
 				return null;
 			}
 			instance.exports.pefileSliceArray(this.address, dataEntry.address, dataEntry.size, 1);
-			return wrapResult();
+			return /** @type {Uint8Array|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Returns the first resource with matching type and name.
 		 * @remarks The returned array is a subarray of `this.data`.
 		 * @param {Number|string} type The type component of a resource.
 		 * @param {Number|string} name The name component of a resource.
-		 * @returns {Uint8Array|null}
+		 * @returns {Uint8Array|null|Error}
 		 */
 		resourcesFindResource(type, name) {
-			let [typePtr, typeLen] = copyResourceName(type);
-			let [namePtr, nameLen] = copyResourceName(name);
+			let typeResult = copyResourceName(type);
+			if (typeResult instanceof Error) return typeResult;
+			let nameResult = copyResourceName(name);
+			if (nameResult instanceof Error) return nameResult;
+			let [typePtr, typeLen] = typeResult;
+			let [namePtr, nameLen] = nameResult;
 			instance.exports.pefileResourcesFindResource(this.address, typePtr, typeLen, namePtr, nameLen);
-			return wrapResult();
+			return /** @type {Uint8Array|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Returns the resource given its type, name and lang components.
@@ -475,25 +551,31 @@ async function pelite(wasmPath) {
 		 * @param {Number|string} type The type component of a resource.
 		 * @param {Number|string} name The name component of a resource.
 		 * @param {Number|string} lang The lang component of a resource.
-		 * @returns {Uint8Array|null}
+		 * @returns {Uint8Array|null|Error}
 		 */
 		resourcesFindResourceEx(type, name, lang) {
-			let [typePtr, typeLen] = copyResourceName(type);
-			let [namePtr, nameLen] = copyResourceName(name);
-			let [langPtr, langLen] = copyResourceName(lang);
+			let typeResult = copyResourceName(type);
+			if (typeResult instanceof Error) return typeResult;
+			let nameResult = copyResourceName(name);
+			if (nameResult instanceof Error) return nameResult;
+			let langResult = copyResourceName(lang);
+			if (langResult instanceof Error) return langResult;
+			let [typePtr, typeLen] = typeResult;
+			let [namePtr, nameLen] = nameResult;
+			let [langPtr, langLen] = langResult;
 			instance.exports.pefileResourcesFindResourceEx(this.address, typePtr, typeLen, namePtr, nameLen, langPtr, langLen);
-			return wrapResult();
+			return /** @type {Uint8Array|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Executes the pattern at the given address.
 		 * @param {Number} rva The relative virtual address.
 		 * @param {string} pattern The pattern to match at the given address.
-		 * @returns {Number[]|null}
+		 * @returns {Number[]|null|Error}
 		 */
 		scannerExec(rva, pattern) {
 			let [patPtr, patLen] = copyString(pattern);
 			instance.exports.pefileScannerExec(this.address, rva, patPtr, patLen);
-			return wrapResult();
+			return /** @type {Number[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds a single unique match for the given pattern.
@@ -501,22 +583,22 @@ async function pelite(wasmPath) {
 		 * @param {string} pattern The pattern to search for.
 		 * @param {Number} start The relative virtual address to start searching.
 		 * @param {Number} end The relative virtual address to stop searching.
-		 * @returns {Number[]|null}
+		 * @returns {Number[]|null|Error}
 		 */
 		scannerFind(pattern, start, end) {
 			let [patPtr, patLen] = copyString(pattern);
 			instance.exports.pefileScannerFinds(this.address, patPtr, patLen, start, end);
-			return wrapResult();
+			return /** @type {Number[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds a single unique code match for the given pattern.
 		 * @param {string} pattern The pattern to search for.
-		 * @returns {Number[]|null}
+		 * @returns {Number[]|null|Error}
 		 */
 		scannerFindCode(pattern) {
 			let [patPtr, patLen] = copyString(pattern);
 			instance.exports.pefileScannerFindsCode(this.address, patPtr, patLen);
-			return wrapResult();
+			return /** @type {Number[]|null|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds all matches of the given pattern.
@@ -525,36 +607,41 @@ async function pelite(wasmPath) {
 		 * @param {Number} end The relative virtual address to stop searching.
 		 * @param {Number} offset Skip the first X matches.
 		 * @param {Number} limit Stop when X matches have been found.
-		 * @returns {Number[][]}
+		 * @returns {Number[][]|Error}
 		 */
 		scannerMatches(pattern, start, end, offset, limit) {
 			let [patPtr, patLen] = copyString(pattern);
 			instance.exports.pefileScannerMatches(this.address, patPtr, patLen, start, end, offset, limit);
-			return wrapResult();
+			return /** @type {Number[][]|Error} */ (wrapResult());
 		}
 		/**
 		 * Finds all code matches of the given pattern.
 		 * @param {string} pattern The pattern to search for.
 		 * @param {Number} offset Skip the first X matches.
 		 * @param {Number} limit Stop when X matches have been found.
-		 * @returns {Number[][]}
+		 * @returns {Number[][]|Error}
 		 */
 		scannerMatchesCode(pattern, offset, limit) {
 			let [patPtr, patLen] = copyString(pattern);
 			instance.exports.pefileScannerMatchesCode(this.address, patPtr, patLen, offset, limit);
-			return wrapResult();
+			return /** @type {Number[][]|Error} */ (wrapResult());
 		}
 		/**
 		 * Disposes the PeFile instance and releases its resources.
 		 * @remarks This invalidates all the returned typed array buffers!
 		 */
 		dispose() {
-			instance.exports.pefileDrop(this.address);
+			if (this.address !== 0) {
+				instance.exports.pefileDrop(this.address);
+				this.address = 0;
+			}
 		}
 	}
 	return {
-		module: module,
-		instance: instance,
-		PeFile: PeFile,
+		module,
+		instance,
+		PeFile,
 	};
 }
+
+export default pelite;

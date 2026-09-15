@@ -1,26 +1,16 @@
 
+<link rel="component" href="../utils.vue">
+
 <script>
 "use strict"
 
-class AppSectionsStore {
-	constructor(data) {
-		this.data = data;
-	}
-}
-AppSectionsStore.COMPONENT_NAME = 'app-sections';
-
-Vue.component('app-sections', {
-	data: function() {
-		return {
-			pefile: this.$root.$data.pekit.pefile,
-		};
-	},
+const AppSections = Vue.defineComponent({
 	props: {
-		instance: AppSectionsStore,
+		value: /** @type {any} */ (null),
 	},
 	computed: {
 		headers: function() {
-			return this.pefile.headers();
+			return /** @type {PeHeaders} */ (this.value);
 		},
 		sectionHeaders: function() {
 			return this.headers.SectionHeaders;
@@ -47,7 +37,7 @@ Vue.component('app-sections', {
 				}));
 		},
 		virtualSize: function() {
-			return this.pefile.optionalHeader().SizeOfImage;
+			return this.headers.NtHeaders.OptionalHeader.SizeOfImage;
 		},
 	},
 	methods: {
